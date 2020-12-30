@@ -1,0 +1,2 @@
+cron:
+  cronTrigger: 0/10 * * * * ?
