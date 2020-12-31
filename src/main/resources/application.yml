@@ -2,7 +2,7 @@ server:
   port: 8888
 spring:
   profiles:
-    active: demo
+    active: demo,token
   mvc:
     static-path-pattern: /**
 
@@ -82,4 +82,5 @@ swagger:
   contactUrl: www.baidu.com
   basePackage: com.example.demo.controller
   contactemail: 953459378@qq.com
+
 

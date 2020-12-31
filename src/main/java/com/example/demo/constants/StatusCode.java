@@ -13,6 +13,7 @@ public enum StatusCode {
     DUP(202,"数据重复"),
     NON(204,"数据不存在"),
     NULL(301,"参数为空"),
+    ILLEGAL(401,"非法请求"),
     LOCATION(404,"路径错误"),
     ERROR(500,"系统繁忙"),
     DATABASE(501,"数据异常");

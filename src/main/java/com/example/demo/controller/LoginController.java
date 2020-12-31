@@ -65,7 +65,6 @@ public class LoginController {
         subject.login(usernamePasswordToken);
 /*        subject.checkRole("admin");
         subject.checkPermissions("query", "add");*/
-        String token = AppSecurityUtils.obtainAccessToken();
         return Result.ok()/*.setData("当前token:"+token)*/.setMsg("登陆成功");
     }
 

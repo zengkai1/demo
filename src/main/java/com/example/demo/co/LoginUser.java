@@ -48,4 +48,5 @@ public class LoginUser implements Serializable {
     @TableField(exist = false)
     @ApiModelProperty(value = "角色列表",hidden = true)
     private Set<Role> roles;
+
 }

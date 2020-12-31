@@ -169,11 +169,11 @@ public class CustomRealm extends AuthorizingRealm {
         System.out.println("正常登入");
     }
 
-    /**
+/*    *//**
      * rememberMe管理器
      * @param rememberMeCookie
      * @return
-     */
+     *//*
     @Bean
     public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie){
         CookieRememberMeManager rememberMeManager = new CookieRememberMeManager();
@@ -181,15 +181,15 @@ public class CustomRealm extends AuthorizingRealm {
         return rememberMeManager;
     }
 
-    /**
+    *//**
      * 记住密码Cookie
      * @return
-     */
+     *//*
     @Bean
     public SimpleCookie rememberMeCookie(){
         SimpleCookie cookie = new SimpleCookie("rememberMe");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(60 * 60 * 24 *7);
         return cookie;
-    }
+    }*/
 }
