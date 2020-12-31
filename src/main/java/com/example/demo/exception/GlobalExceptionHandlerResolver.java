@@ -2,7 +2,10 @@ package com.example.demo.exception;
 
 import com.example.demo.constants.StatusCode;
 import com.example.demo.util.Result;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.UnauthenticatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -34,20 +37,36 @@ public class GlobalExceptionHandlerResolver extends ExceptionHandlerExceptionRes
     @ExceptionHandler(ZKCustomException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result handleGlobalException(ZKCustomException e) {
-        logger.error("全局异常信息 exceptionMsg={} ,e={}", e.getMessage(), e);
+        logger.error("全局自定义异常拦截 exceptionMsg={} ,e={}", e.getMessage(), e);
         return Result.failure().setCode(e.getCode()==null?StatusCode.FAILURE.getCode():e.getCode()).setData(e.getLocalizedMessage());
     }
 
     @ExceptionHandler(AuthorizationException.class)
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
     public Result errorHandler(AuthorizationException e) {
-        logger.error("没有通过权限验证！", e);
+        logger.error("没有通过权限验证:{}！", e);
         return Result.failure().setCode(StatusCode.FAILURE.getCode()).setMsg("您没有权限");
+    }
+
+    @ExceptionHandler(IncorrectCredentialsException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public Result incorrectCredentialsException(IncorrectCredentialsException e) {
+        logger.error("密码不匹配:{}！", e);
+        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setMsg("用户名或密码错误");
+    }
+
+    @ExceptionHandler(UnauthenticatedException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public Result authenticationException(UnauthenticatedException e) {
+        logger.error("当前未登陆:{}！", e);
+        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setMsg("当前未登陆");
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result  exceptionTranslation(Exception e) {
-        return handleGlobalException(new ZKCustomException(e.getMessage()));
+        logger.error("全局异常信息 exceptionMsg={} ,e={}", e.getMessage(), e);
+        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setData(e.getLocalizedMessage());
+        //  return handleGlobalException(new ZKCustomException(e.getMessage()));
     }
 }

@@ -40,4 +40,8 @@ public class JwtProperties {
      */
     private String secretKey;
 
+    /**
+     * 更新令牌时间，单位分钟
+     */
+    private Integer refreshCheckTime;
 }

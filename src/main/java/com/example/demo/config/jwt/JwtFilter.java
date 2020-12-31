@@ -5,11 +5,13 @@ import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.example.demo.co.LoginUser;
+import com.example.demo.co.shiro.AppShiroUser;
+import com.example.demo.co.shiro.UserContext;
 import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.util.JwtUtil;
+import com.example.demo.util.RequestIpUtils;
 import com.example.demo.util.Result;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
 import org.slf4j.Logger;
@@ -45,6 +47,18 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    /**
+     * 检测Header里Authorization字段
+     * 判断是否登录
+     */
+    @Override
+    protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
+        HttpServletRequest req = (HttpServletRequest) request;
+        String authorization = req.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
+        return authorization != null;
+    }
+
 
     /**
      * 检测Header里Authorization，判断是否登陆
@@ -96,10 +110,9 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         PrintWriter out = null;
         try {
             out = httpServletResponse.getWriter();
-
             Result result = new Result();
             result.setCode(StatusCode.ILLEGAL.getCode()).setMsg(msg);
-            out.append(JSONUtil.toJsonStr(result));
+            out.append(JSONUtil.toJsonStr(JSONUtil.parse(result)));
         } catch (IOException e) {
             LOGGER.error("返回Response信息出现IOException异常:" + e.getMessage());
         } finally {
@@ -125,8 +138,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         getSubject(request,response).login(customToken);
         //绑定上下文
         String account = JwtUtil.getClaim(authorization,SecurityConstants.ACCOUNT);
-        //TODO
-        //UserContext userContext= new UserContext(new LoginUser(account));
+        AppShiroUser appShiroUser = new AppShiroUser(account,customToken.getPrincipal().toString(), RequestIpUtils.getIpAddr(servletRequest));
+        UserContext userContext= new UserContext(appShiroUser);
         //如果没有抛出异常则代表登入成功，返回true
         return true;
     }

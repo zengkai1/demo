@@ -33,18 +33,16 @@ public class SystemLogoutFilter extends LogoutFilter {
         } catch (Exception ex) {
             logger.error("退出登录错误",ex);
         }
-
-    //    this.writeResult(response);
         //不执行后续的过滤器
-        return false;
+        return true;
     }
-
-/*    private void writeResult(ServletResponse response){
+/*
+    private void writeResult(ServletResponse response){
         //响应Json结果
         PrintWriter out = null;
         try {
             out = response.getWriter();
-            Result result = new Result(StatusCode.ERROR.getCode(),e.,null,Constants.TOKEN_CHECK_SUCCESS);
+            Result result = new Result(StatusCode.SUCCESS.getCode(),"退出登陆");
             out.append(JSON.toJSONString(result));
         } catch (IOException e) {
             logger.error("返回Response信息出现IOException异常:" + e.getMessage());

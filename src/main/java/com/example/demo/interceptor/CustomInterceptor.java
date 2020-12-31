@@ -22,7 +22,7 @@ import java.util.Objects;
  * @Version: V1.0
  * @since: 2020/12/10 11:08
  */
-@Configuration
+//@Configuration
 public class CustomInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomInterceptor.class);
@@ -33,6 +33,8 @@ public class CustomInterceptor implements HandlerInterceptor {
             logger.info("已放行:{}",request.getRequestURI());
             return true;
         }
+        //鉴权
+        //if (1==1 ) return true;
         //获取请求body
         ServletInputStream inputStream = request.getInputStream();
         byte[] bodyBytes = StreamUtils.copyToByteArray(inputStream);

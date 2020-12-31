@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.co.LoginUser;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
 import com.example.demo.form.user.SaveUserForm;
+import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.AppSecurityUtils;
 import com.example.demo.util.MD5SaltUtil;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Objects;
 
 /**
@@ -40,6 +42,9 @@ public class LoginController {
     private UserService userService;
 
     @Autowired
+    private LoginService loginService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     /**
@@ -49,23 +54,12 @@ public class LoginController {
      */
     @GetMapping("/login")
     @ApiOperation(value = "用户登入", notes = "用户登入")
-    public Result<String> login( LoginUser user) {
+    public Result<String> login(LoginUser user, HttpServletResponse response) {
         if (StringUtils.isEmpty(user.getUsername()) || StringUtils.isEmpty(user.getPassword())) {
             return Result.error().setMsg("请输入用户名和密码登入系统");
         }
-        //用户认证信息
-        Subject subject = SecurityUtils.getSubject();
-        //永不过期
-        subject.getSession().setTimeout(-1000L);
-        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(
-                user.getUsername(),
-                user.getPassword()
-        );
-        //进行验证
-        subject.login(usernamePasswordToken);
-/*        subject.checkRole("admin");
-        subject.checkPermissions("query", "add");*/
-        return Result.ok()/*.setData("当前token:"+token)*/.setMsg("登陆成功");
+        loginService.login(user,response);
+        return Result.ok().setMsg("登陆成功");
     }
 
     /**

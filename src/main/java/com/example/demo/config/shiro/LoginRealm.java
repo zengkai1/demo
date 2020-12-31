@@ -25,10 +25,7 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.web.mgt.CookieRememberMeManager;
-import org.apache.shiro.web.servlet.SimpleCookie;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -50,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * @since: 2020/12/11 17:11
  */
 @Configuration
-public class CustomRealm extends AuthorizingRealm {
+public class LoginRealm extends AuthorizingRealm {
 
     @Autowired
     private UserService userService;
@@ -58,7 +55,7 @@ public class CustomRealm extends AuthorizingRealm {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    public CustomRealm() {
+    public LoginRealm() {
       //  setAuthenticationTokenClass(CustomToken.class);
         setAuthenticationTokenClass(UsernamePasswordToken.class);
     }

@@ -4,6 +4,7 @@ import com.example.demo.util.MD5SaltUtil;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
  * @since: 2020/12/15 17:17
  */
 @Configuration
-public class CredentialsMatcher extends SimpleCredentialsMatcher {
+public class MyCredentialsMatcher extends SimpleCredentialsMatcher {
 
     @Override
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
@@ -32,4 +33,5 @@ public class CredentialsMatcher extends SimpleCredentialsMatcher {
         //密码比对
         return  MD5SaltUtil.verify(inputPassword,dbPassword);
     }
+
 }

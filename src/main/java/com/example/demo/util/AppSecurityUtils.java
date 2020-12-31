@@ -1,7 +1,6 @@
 package com.example.demo.util;
 
-import cn.hutool.json.JSONUtil;
-import com.example.demo.co.AppShiroUser;
+import com.example.demo.co.shiro.AppShiroUser;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 

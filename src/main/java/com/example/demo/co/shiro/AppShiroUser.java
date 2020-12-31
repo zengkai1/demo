@@ -1,4 +1,4 @@
-package com.example.demo.co;
+package com.example.demo.co.shiro;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -20,18 +20,19 @@ public class AppShiroUser implements Serializable {
     private static final long serialVersionUID = -2320409490558933423L;
 
     @ApiModelProperty(value = "用户id")
-    private String id;	// 用户ID
+    private String id;
 
     @ApiModelProperty(value = "用户oauth授权accessToken")
-    private String accessToken;	// 用户oauth授权accessToken
+    private String accessToken;
 
     @ApiModelProperty(value = "用户登录的机器IP")
-    private String ipAddress;//用户登录的机器IP
+    private String ipAddress;
 
-    public AppShiroUser(String id, String accessToken) {
+    public AppShiroUser(String id, String accessToken,String ipAddress) {
         super();
         this.id = id;
         this.accessToken = accessToken;
+        this.ipAddress = ipAddress;
     }
 
     public String getId() {

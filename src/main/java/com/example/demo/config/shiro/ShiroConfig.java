@@ -10,7 +10,6 @@ import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSource
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -31,7 +30,6 @@ import java.util.Map;
  */
 @Configuration
 public class ShiroConfig {
-
     @Bean
     @DependsOn("lifecycleBeanPostProcessor")
     public static DefaultAdvisorAutoProxyCreator getLifecycleBeanPostProcessor(){
@@ -41,19 +39,9 @@ public class ShiroConfig {
         return defaultAdvisorAutoProxyCreator;
     }
 
-    //将自己的验证方式加入容器
     @Bean
-    public CustomRealm myShiroRealm() {
-        CustomRealm customRealm = new CustomRealm();
-        // 设置凭证比较器
-        CredentialsMatcher credentialsMatcher = new CredentialsMatcher();
-        customRealm.setCredentialsMatcher(credentialsMatcher);
-        return customRealm;
-    }
-
     //权限管理，配置主要是Realm的管理认证
-    @Bean("securityManager")
-    public SecurityManager securityManager(CustomRealm customRealm){
+    public DefaultWebSecurityManager securityManager(CustomRealm customRealm){
         DefaultWebSecurityManager securityManager =  new DefaultWebSecurityManager();
         securityManager.setRealm(customRealm);
         //关闭shiro自带的session
@@ -72,20 +60,14 @@ public class ShiroConfig {
      * @return
      */
     @Bean
-    public ShiroFilterFactoryBean shiroFilterFactoryBean(SecurityManager securityManager) {
+    public ShiroFilterFactoryBean shiroFilterFactoryBean(DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         // 添加jwt过滤器
         Map<String, Filter> filterMap = new HashMap<>();
-        filterMap.put("jwt", new JwtFilter());
+        filterMap.put("jwt", jwtFilter());
         filterMap.put("logout", new SystemLogoutFilter());
         shiroFilterFactoryBean.setFilters(filterMap);
-        //jwt拦截器
-        Map<String,String> filterRuleMap = new LinkedHashMap<>();
-        filterRuleMap.put("/logout", "logout");
-        filterRuleMap.put("/**", "jwt");
-        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterRuleMap);
-
         Map<String, String> map = new LinkedHashMap<>();
         //放行Swagger2页面，需要放行这些
         map.put("/swagger-ui.html/**","anon");
@@ -112,7 +94,14 @@ public class ShiroConfig {
         //错误页面，认证不通过跳转
         shiroFilterFactoryBean.setUnauthorizedUrl("/error");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(map);
+        ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
+        shiroFilter.setSecurityManager(securityManager);
         return shiroFilterFactoryBean;
+    }
+
+    @Bean
+    public JwtFilter jwtFilter(){
+        return new JwtFilter();
     }
 
     @Bean
@@ -122,11 +111,13 @@ public class ShiroConfig {
 
 
     @Bean
-    public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(SecurityManager securityManager){
+    public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(DefaultWebSecurityManager securityManager){
         AuthorizationAttributeSourceAdvisor advisor = new AuthorizationAttributeSourceAdvisor();
         advisor.setSecurityManager(securityManager);
         return advisor;
     }
+
+
 
 
 }

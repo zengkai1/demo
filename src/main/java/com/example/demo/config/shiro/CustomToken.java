@@ -1,6 +1,7 @@
 package com.example.demo.config.shiro;
 
 import org.apache.shiro.authc.AuthenticationToken;
+import org.springframework.stereotype.Component;
 
 /**
  * <p>
