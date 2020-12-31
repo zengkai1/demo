@@ -1,3 +1,4 @@
+/*
 package com.example.demo.config.shiro;
 
 import cn.hutool.core.collection.CollUtil;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+*/
 /**
  * <p>
  *  自定义主体
@@ -45,7 +47,8 @@ import java.util.concurrent.TimeUnit;
  * @author: 曾凯
  * @Version: V1.0
  * @since: 2020/12/11 17:11
- */
+ *//*
+
 @Configuration
 public class LoginRealm extends AuthorizingRealm {
 
@@ -60,13 +63,15 @@ public class LoginRealm extends AuthorizingRealm {
         setAuthenticationTokenClass(UsernamePasswordToken.class);
     }
 
-    /**
+    */
+/**
      * @MethodName doGetAuthorizationInfo
      * @Description 权限配置类
      * @Param [principalCollection]
      * @Return AuthorizationInfo
      * @Author zengkai
-     */
+     *//*
+
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
         //获取登录用户名
@@ -91,13 +96,15 @@ public class LoginRealm extends AuthorizingRealm {
         return simpleAuthorizationInfo;
     }
 
-    /**
+    */
+/**
      * @MethodName doGetAuthenticationInfo
      * @Description 认证配置类
      * @Param [authenticationToken]
      * @Return AuthenticationInfo
      * @Author zengkai
-     */
+     *//*
+
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken)  {
 
@@ -123,10 +130,12 @@ public class LoginRealm extends AuthorizingRealm {
         throw new AuthenticationException("Token expired or incorrect.");
     }
 
-    /**
+    */
+/**
      * 每日登陆限制，若超出限制则抛出异常
      * @param username ： 用户名
-     */
+     *//*
+
     private void limitLogin(String username){
         //keyPrefix：存入redis计数器key
         String keyPrefix = KeyPrefixConstants.LOGIN_COUNT+username;
@@ -175,21 +184,28 @@ public class LoginRealm extends AuthorizingRealm {
         System.out.println("正常登入");
     }
 
-    /**
+    */
+/**
      * 将自己的验证方式加入容器
      * @return 自定义密码比较器
-     */
+     *//*
+
     @Override
     public CredentialsMatcher getCredentialsMatcher() {
         return new MyCredentialsMatcher();
     }
 
 
-    /*    *//**
+    */
+/*    *//*
+*/
+/**
      * rememberMe管理器
      * @param rememberMeCookie
      * @return
      *//*
+*/
+/*
     @Bean
     public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie){
         CookieRememberMeManager rememberMeManager = new CookieRememberMeManager();
@@ -197,15 +213,21 @@ public class LoginRealm extends AuthorizingRealm {
         return rememberMeManager;
     }
 
-    *//**
+    *//*
+*/
+/**
      * 记住密码Cookie
      * @return
      *//*
+*/
+/*
     @Bean
     public SimpleCookie rememberMeCookie(){
         SimpleCookie cookie = new SimpleCookie("rememberMe");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(60 * 60 * 24 *7);
         return cookie;
-    }*/
+    }*//*
+
 }
+*/
