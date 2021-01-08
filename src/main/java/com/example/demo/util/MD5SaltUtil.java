@@ -71,7 +71,7 @@ public class MD5SaltUtil {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             byte[] bs = md5.digest(src.getBytes());
-            return new String(new Hex().encode(bs));
+            return new String(Hex.encode(bs));
         } catch (Exception e) {
             throw new ZKCustomException(StatusCode.ERROR.getCode(),"加密异常");
         }

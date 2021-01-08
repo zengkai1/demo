@@ -1,6 +1,9 @@
 package com.example.demo.interceptor;
 
 import cn.hutool.core.util.StrUtil;
+import com.example.demo.constants.StatusCode;
+import com.example.demo.constants.interfaces.SecurityConstants;
+import com.example.demo.exception.ZKCustomException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -34,8 +37,11 @@ public class CustomInterceptor implements HandlerInterceptor {
             return true;
         }
         //鉴权
-        //if (1==1 ) return true;
-        //获取请求body
+        if (StrUtil.isEmpty(request.getHeader(SecurityConstants.REQUEST_AUTH_HEADER))){
+            throw new ZKCustomException(StatusCode.ILLEGAL.getCode(),"未携带请求凭证!");
+        }
+
+        //获取请求参数
         ServletInputStream inputStream = request.getInputStream();
         byte[] bodyBytes = StreamUtils.copyToByteArray(inputStream);
         String body = new String(bodyBytes, request.getCharacterEncoding());

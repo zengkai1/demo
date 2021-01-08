@@ -1,14 +1,33 @@
 package com.example.demo.config.shiro;
 
+import cn.hutool.core.date.BetweenFormatter;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.example.demo.constants.StatusCode;
+import com.example.demo.constants.interfaces.DemoConstants;
+import com.example.demo.constants.interfaces.KeyPrefixConstants;
+import com.example.demo.exception.ZKCustomException;
+import com.example.demo.util.DateTimeUtil;
 import com.example.demo.util.MD5SaltUtil;
+import com.example.demo.util.RequestIpUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -31,7 +50,7 @@ public class MyCredentialsMatcher extends SimpleCredentialsMatcher {
         //数据库中存储的密码
         String dbPassword = (String) info.getCredentials();
         //密码比对
-        return  MD5SaltUtil.verify(inputPassword,dbPassword);
+        boolean verify = MD5SaltUtil.verify(inputPassword, dbPassword);
+        return verify;
     }
-
 }

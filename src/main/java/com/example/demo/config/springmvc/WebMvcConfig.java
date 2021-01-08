@@ -37,6 +37,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         pathPatterns.add("/swagger-resources/**");
         pathPatterns.add("/v2/**");
         pathPatterns.add("/webjars/**");
+        pathPatterns.add("/login");
+        pathPatterns.add("/logout");
+        pathPatterns.add("/doc.html");
         registration.excludePathPatterns(pathPatterns);
     }
 

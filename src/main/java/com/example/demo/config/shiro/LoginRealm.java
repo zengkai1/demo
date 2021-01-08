@@ -1,4 +1,4 @@
-/*
+
 package com.example.demo.config.shiro;
 
 import cn.hutool.core.collection.CollUtil;
@@ -20,9 +20,12 @@ import com.example.demo.service.UserService;
 import com.example.demo.util.DateTimeUtil;
 import com.example.demo.util.JwtUtil;
 import com.example.demo.util.RequestIpUtils;
+import lombok.extern.log4j.Log4j2;
 import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.credential.AllowAllCredentialsMatcher;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -38,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-*/
 /**
  * <p>
  *  自定义主体
@@ -47,31 +49,37 @@ import java.util.concurrent.TimeUnit;
  * @author: 曾凯
  * @Version: V1.0
  * @since: 2020/12/11 17:11
- *//*
+ */
 
 @Configuration
-public class LoginRealm extends AuthorizingRealm {
+@Log4j2
+public class LoginRealm extends AuthorizingRealm{
 
     @Autowired
     private UserService userService;
-
     @Autowired
     private RedisTemplate redisTemplate;
 
+    //将自己的验证方式加入容器
     public LoginRealm() {
-      //  setAuthenticationTokenClass(CustomToken.class);
+        // 设置凭证比较器
+        MyCredentialsMatcher credentialsMatcher = new MyCredentialsMatcher();
+        setCredentialsMatcher(credentialsMatcher);
         setAuthenticationTokenClass(UsernamePasswordToken.class);
     }
 
-    */
-/**
+    @Override
+    public boolean supports(AuthenticationToken token) {
+        return token instanceof UsernamePasswordToken;
+    }
+
+    /**
      * @MethodName doGetAuthorizationInfo
      * @Description 权限配置类
      * @Param [principalCollection]
      * @Return AuthorizationInfo
      * @Author zengkai
-     *//*
-
+     */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
         //获取登录用户名
@@ -96,46 +104,67 @@ public class LoginRealm extends AuthorizingRealm {
         return simpleAuthorizationInfo;
     }
 
-    */
-/**
+    /**
      * @MethodName doGetAuthenticationInfo
      * @Description 认证配置类
      * @Param [authenticationToken]
      * @Return AuthenticationInfo
      * @Author zengkai
-     *//*
-
+     */
     @Override
-    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken)  {
-
-        String token = (String)authenticationToken.getPrincipal();
-        String account  = JwtUtil.getClaim(token, SecurityConstants.ACCOUNT);
-        if (account == null) {
-            throw new AuthenticationException("token invalid");
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) {
+        if (Objects.isNull(authenticationToken.getPrincipal())) {
+            return null;
         }
-        LoginUser user = userService.qryUserByUsername(account);
+        //获取用户信息
+        String token = authenticationToken.getPrincipal().toString();
+        LoginUser user = userService.qryUserByUsername(token);
         if (user == null) {
-            throw new AuthenticationException("user didn't existed!");
+            //这里返回后会报出对应异常
+            throw new ZKCustomException(StatusCode.NON.getCode(), "用户不存在");
         }
-        String refreshTokenCacheKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
-        String currentTimeMillisRedis = (String)redisTemplate.opsForValue().get(refreshTokenCacheKey);
-        if (StrUtil.isNotEmpty(currentTimeMillisRedis)) {
-            // 获取AccessToken时间戳，与RefreshToken的时间戳对比
-            if (JwtUtil.getClaim(token, SecurityConstants.CURRENT_TIME_MILLIS).equals(currentTimeMillisRedis)) {
-                SimpleAuthenticationInfo shiroRealm = new SimpleAuthenticationInfo(token, token, "shiroRealm");
-                limitLogin(account);
-                return shiroRealm;
+        if (authenticationToken instanceof UsernamePasswordToken) {
+            //这里验证authenticationToken和simpleAuthenticationInfo的信息
+            SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(token, user.getPassword().toString(), "loginRealm");
+            return simpleAuthenticationInfo;
+        }else if (authenticationToken instanceof CustomToken) {
+            String account = JwtUtil.getClaim(token, SecurityConstants.ACCOUNT);
+            if (account == null) {
+                throw new AuthenticationException("token无效!");
             }
+            if (JwtUtil.verify(token)) {
+                return new SimpleAuthenticationInfo(token, token, "customRealm");
+            }
+            throw new AuthenticationException("token已失效或不匹配.");
+        }else {
+            //一般不会进入这里
+            throw new AuthenticationException("认证配置类异常.");
         }
-        throw new AuthenticationException("Token expired or incorrect.");
+    }
+    /**
+     * 重写密码匹配方法,添加每日登陆限制
+     * @param token
+     * @param info
+     * @throws AuthenticationException
+     */
+    @Override
+    protected void assertCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) throws AuthenticationException {
+        CredentialsMatcher cm = this.getCredentialsMatcher();
+        if (cm != null) {
+            if (!cm.doCredentialsMatch(token, info)) {
+                String msg = "Submitted credentials for token [" + token + "] did not match the expected credentials.";
+                throw new IncorrectCredentialsException(msg);
+            }
+        } else {
+            throw new AuthenticationException("A CredentialsMatcher must be configured in order to verify credentials during authentication.  If you do not wish for credentials to be examined, you can configure an " + AllowAllCredentialsMatcher.class.getName() + " instance.");
+        }
+        limitLogin(token.getPrincipal().toString());
     }
 
-    */
-/**
+    /**
      * 每日登陆限制，若超出限制则抛出异常
      * @param username ： 用户名
-     *//*
-
+     * */
     private void limitLogin(String username){
         //keyPrefix：存入redis计数器key
         String keyPrefix = KeyPrefixConstants.LOGIN_COUNT+username;
@@ -180,54 +209,6 @@ public class LoginRealm extends AuthorizingRealm {
                 redisTemplate.opsForValue().set(keyPrefix, JSONUtil.toJsonStr(map),limitPeriod, TimeUnit.SECONDS);
             }
         }
-        System.out.println("当前已登入："+currentCount+"次");
-        System.out.println("正常登入");
+        log.info("用户正常登陆, 当前已登入{}次",currentCount);
     }
-
-    */
-/**
-     * 将自己的验证方式加入容器
-     * @return 自定义密码比较器
-     *//*
-
-    @Override
-    public CredentialsMatcher getCredentialsMatcher() {
-        return new MyCredentialsMatcher();
-    }
-
-
-    */
-/*    *//*
-*/
-/**
-     * rememberMe管理器
-     * @param rememberMeCookie
-     * @return
-     *//*
-*/
-/*
-    @Bean
-    public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie){
-        CookieRememberMeManager rememberMeManager = new CookieRememberMeManager();
-        rememberMeManager.setCookie(rememberMeCookie);
-        return rememberMeManager;
-    }
-
-    *//*
-*/
-/**
-     * 记住密码Cookie
-     * @return
-     *//*
-*/
-/*
-    @Bean
-    public SimpleCookie rememberMeCookie(){
-        SimpleCookie cookie = new SimpleCookie("rememberMe");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(60 * 60 * 24 *7);
-        return cookie;
-    }*//*
-
 }
-*/

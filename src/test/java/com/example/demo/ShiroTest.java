@@ -8,6 +8,8 @@ import org.apache.shiro.subject.Subject;
 import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
+
 /**
  * <p>
  *
@@ -42,5 +44,6 @@ public class ShiroTest {
 
         System.out.println("isAuthenticated:" + subject.isAuthenticated()); // 输出false
     }
+
 }
 

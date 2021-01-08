@@ -48,15 +48,19 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
     @Autowired
     private RedisTemplate redisTemplate;
 
+
     /**
-     * 检测Header里Authorization字段
-     * 判断是否登录
+     * 检查是否需要更新Token
+     * @param authorization
+     * @param currentTimeMillis
+     * @return
      */
-    @Override
-    protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
-        HttpServletRequest req = (HttpServletRequest) request;
-        String authorization = req.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
-        return authorization != null;
+    private boolean refreshCheck(String authorization, Long currentTimeMillis) {
+        String tokenMillis = JwtUtil.getClaim(authorization, SecurityConstants.CURRENT_TIME_MILLIS);
+        if (currentTimeMillis - Long.parseLong(tokenMillis) > (jwtProperties.getRefreshCheckTime() * 60 * 1000L)) {
+            return true;
+        }
+        return false;
     }
 
 
@@ -142,6 +146,18 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         UserContext userContext= new UserContext(appShiroUser);
         //如果没有抛出异常则代表登入成功，返回true
         return true;
+    }
+
+    /**
+     * 重写 onAccessDenied 方法，避免父类中调用再次executeLogin
+     * @param request
+     * @param response
+     * @return
+     */
+    @Override
+    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) {
+        this.sendChallenge(request, response);
+        return false;
     }
 
     /**

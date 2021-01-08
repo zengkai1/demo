@@ -1,5 +1,6 @@
 package com.example.demo.config.swagger2;
 
+import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.interceptor.CustomInterceptor;
 import com.google.common.collect.Lists;
 import lombok.Data;
@@ -12,14 +13,17 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import springfox.documentation.builders.ApiInfoBuilder;
+import springfox.documentation.builders.ParameterBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
+import springfox.documentation.schema.ModelRef;
+import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,8 +56,18 @@ public class Swagger2Config{
 
     @Bean
     public Docket createRestApi() {
+        Parameter token = new ParameterBuilder().name(SecurityConstants.REQUEST_AUTH_HEADER)  //全局参数
+                .description("用户登陆令牌")
+                .parameterType("header")
+                .modelRef(new ModelRef("String"))
+                .required(false)
+                .hidden(false)
+                .build();
+        ArrayList<Parameter> parameters = new ArrayList<>();
+        parameters.add(token);
         return new Docket(DocumentationType.SWAGGER_2)
-              //  .pathMapping("/")
+                .globalOperationParameters(parameters)
+                //.pathMapping("/")
                 .apiInfo(apiInfo())
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.example.demo.controller"))
@@ -61,6 +75,7 @@ public class Swagger2Config{
                 .build()
                 .groupName(groupName);
     }
+
 
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()

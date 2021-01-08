@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.co.LoginUser;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
+import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
@@ -59,7 +60,8 @@ public class LoginController {
             return Result.error().setMsg("请输入用户名和密码登入系统");
         }
         loginService.login(user,response);
-        return Result.ok().setMsg("登陆成功");
+        String token = response.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
+        return Result.ok().setMsg("登陆成功").setData(token).setDescription("JWT Token信息");
     }
 
     /**
@@ -122,7 +124,7 @@ public class LoginController {
         return Result.handleFailure("解除失败，该用户未被锁定");
     }
 
-    /**
+    /*
      * 错误页面
      * @return 错误页面
      */
