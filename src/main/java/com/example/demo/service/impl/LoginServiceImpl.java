@@ -83,10 +83,10 @@ public class LoginServiceImpl implements LoginService {
         //生成token
         String token = JwtUtil.sign(account, currentTimeMillis);
         //写入header
-        response.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, token);
+        response.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, "Bearer "+token);
         response.setHeader(SecurityConstants.ACCESS_CONTROL_EXPOSE, SecurityConstants.REQUEST_AUTH_HEADER);
-        //用户认证信息
-     //   Subject subject = SecurityUtils.getSubject();
-      //  subject.login(new CustomToken(token));
+/*        //用户认证信息
+       Subject subject = SecurityUtils.getSubject();
+        subject.login(new CustomToken(token));*/
     }
 }

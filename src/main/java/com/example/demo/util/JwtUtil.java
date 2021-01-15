@@ -1,18 +1,27 @@
 package com.example.demo.util;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.extension.api.R;
+import com.example.demo.co.LoginUser;
 import com.example.demo.config.jwt.JwtProperties;
 import com.example.demo.constants.interfaces.SecurityConstants;
+import com.example.demo.exception.ZKCustomException;
+import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.util.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Date;
+import java.util.List;
 
 /**
  * <p>
@@ -52,26 +61,16 @@ public class JwtUtil {
      * @return boolean
      */
     public static boolean verify(String token){
-        String secret = getClaim(token, SecurityConstants.ACCOUNT + jwtUtil.jwtProperties.getSecretKey());
+        token = token.replace("Bearer ","");
+        String account = getClaim(token, SecurityConstants.ACCOUNT);
+        String secret = account + jwtUtil.jwtProperties.getSecretKey();;
         Algorithm algorithm = Algorithm.HMAC256(secret);
-        JWTVerifier verifier = JWT.require(algorithm).build();
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withClaim(SecurityConstants.ACCOUNT, account)
+                .build();
+        //JWTVerifier verifier = JWT.require(algorithm).build();
         verifier.verify(token);
         return true;
-    }
-
-    /**
-     * 获得token中的信息无需secret解密也能获得
-     * @param token
-     * @param claim
-     * @return
-     */
-    public static String getClaim(String token,String claim){
-        try{
-            DecodedJWT jwt = JWT.decode(token);
-            return jwt.getClaim(claim).asString();
-        }catch (JWTDecodeException e){
-            return null;
-        }
     }
 
     /**
@@ -84,11 +83,30 @@ public class JwtUtil {
         //账号加JWT私钥加密
         String secret = account + jwtUtil.jwtProperties.getSecretKey();
         //此处过期时间/毫秒
-        Date date = new Date(System.currentTimeMillis() + jwtUtil.jwtProperties.getTokenExpireTime() * 60 * 1000L);
+        Date date = new Date(System.currentTimeMillis() + jwtUtil.jwtProperties.getTokenExpireTime()/* * 60 * 1000L*/);
         Algorithm algorithm = Algorithm.HMAC256(secret);
         return JWT.create().withClaim(SecurityConstants.ACCOUNT,account)
                 .withClaim(SecurityConstants.CURRENT_TIME_MILLIS,currentTimeMillis)
                 .withExpiresAt(date)
                 .sign(algorithm);
     }
+
+    /**
+     * 获得token中的信息无需secret解密也能获得
+     * @param token
+     * @param claim
+     * @return
+     */
+    public static String getClaim(String token,String claim){
+        try{
+            token = token.replace("Bearer ","");
+            DecodedJWT jwt = JWT.decode(token);
+            String str = jwt.getClaim(claim).asString();
+            return str;
+        }catch (JWTDecodeException e){
+            throw new ZKCustomException(e.getMessage());
+       //     return null;
+        }
+    }
+
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
+import com.example.demo.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,7 @@ import java.util.Objects;
  * @Version: V1.0
  * @since: 2020/12/10 11:08
  */
-//@Configuration
+@Configuration
 public class CustomInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomInterceptor.class);
@@ -37,10 +38,14 @@ public class CustomInterceptor implements HandlerInterceptor {
             return true;
         }
         //鉴权
-        if (StrUtil.isEmpty(request.getHeader(SecurityConstants.REQUEST_AUTH_HEADER))){
+        String token = request.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
+        if (StrUtil.isEmpty(token)){
             throw new ZKCustomException(StatusCode.ILLEGAL.getCode(),"未携带请求凭证!");
         }
-
+        //匹配token
+        if (!JwtUtil.verify(token)){
+            throw new ZKCustomException(StatusCode.ILLEGAL.getCode(),"token已失效或不匹配");
+        }
         //获取请求参数
         ServletInputStream inputStream = request.getInputStream();
         byte[] bodyBytes = StreamUtils.copyToByteArray(inputStream);

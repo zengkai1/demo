@@ -6,4 +6,4 @@ token:
   # shiro缓存有效期，单位分钟，2*60=120
   shiroCacheExpireTime: 120
   # token加密密钥
-  secreKey: demokey
+  secretKey: demokey

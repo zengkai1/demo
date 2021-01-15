@@ -1,10 +1,7 @@
 package com.example.demo.config.shiro;
 
 import com.example.demo.config.jwt.JwtFilter;
-import com.example.demo.config.jwt.SystemLogoutFilter;
-import com.google.common.collect.Lists;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
+import org.apache.shiro.authc.Authenticator;
 import org.apache.shiro.authc.pam.FirstSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
@@ -20,10 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
 import javax.servlet.Filter;
-import java.util.List;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -46,13 +40,13 @@ public class ShiroConfig {
         return defaultAdvisorAutoProxyCreator;
     }
 
-    /**
-     * 权限管理，配置主要是Realm的管理认证
-     * @param loginRealm
-     * @return
-     */
+        /**
+         * 权限管理，配置主要是Realm的管理认证
+         * @param loginRealm
+         * @return
+         */
     @Bean
-    public DefaultWebSecurityManager securityManager(LoginRealm loginRealm){
+    public DefaultWebSecurityManager securityManager(LoginRealm loginRealm,CustomRealm customRealm){
         DefaultWebSecurityManager securityManager =  new DefaultWebSecurityManager();
         securityManager.setRealm(loginRealm);
         //关闭shiro自带的session
@@ -94,7 +88,7 @@ public class ShiroConfig {
         map.put("/mongo/**","anon");
         map.put("/register","anon");
         //对所有用户认证，“authc”：url必须经过认证通过才可以访问
-       // map.put("/**", "jwt");
+        // map.put("/**", "jwt");
        // map.put("/logout","logout");
         //登录
         shiroFilterFactoryBean.setLoginUrl("/login");
@@ -126,4 +120,11 @@ public class ShiroConfig {
         return advisor;
     }
 
+    @Bean
+    public Authenticator authenticator( ) {
+        ModularRealmAuthenticator authenticator = new ModularRealmAuthenticator();
+        authenticator.setRealms(Arrays.asList(new LoginRealm(), new CustomRealm()));
+        authenticator.setAuthenticationStrategy(new FirstSuccessfulStrategy());
+        return authenticator;
+    }
 }

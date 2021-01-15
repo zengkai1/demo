@@ -128,7 +128,7 @@ public class LoginRealm extends AuthorizingRealm{
             SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(token, user.getPassword().toString(), "loginRealm");
             return simpleAuthenticationInfo;
         }else if (authenticationToken instanceof CustomToken) {
-            String account = JwtUtil.getClaim(token, SecurityConstants.ACCOUNT);
+            String account = JwtUtil.getClaim(authenticationToken.getPrincipal().toString(), SecurityConstants.ACCOUNT);
             if (account == null) {
                 throw new AuthenticationException("token无效!");
             }

@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.util.Result;
 import org.apache.shiro.authc.AuthenticationException;
@@ -69,4 +70,12 @@ public class GlobalExceptionHandlerResolver extends ExceptionHandlerExceptionRes
         return Result.failure().setCode(StatusCode.FAILURE.getCode()).setData(e.getLocalizedMessage());
         //  return handleGlobalException(new ZKCustomException(e.getMessage()));
     }
+
+    @ExceptionHandler(SignatureVerificationException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public Result SignatureVerificationException(SignatureVerificationException e) {
+        logger.error("TOKEN不匹配或已失效:{}！", e);
+        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setMsg("token不匹配或已失效！");
+    }
+
 }

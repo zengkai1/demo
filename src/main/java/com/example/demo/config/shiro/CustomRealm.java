@@ -40,6 +40,7 @@ public class CustomRealm extends AuthorizingRealm {
 
     public  CustomRealm( ){
         setAuthenticationTokenClass(CustomToken.class);
+        this.setCredentialsMatcher(new JWTCredentialsMatcher());
     }
 
     @Override
