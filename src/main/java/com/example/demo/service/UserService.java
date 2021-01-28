@@ -7,6 +7,7 @@ import com.example.demo.co.User;
 import com.example.demo.co.user.update.UpdateUserForm;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.form.user.SaveUserForm;
+import com.example.demo.util.Result;
 
 /**
  * <p>
@@ -61,4 +62,5 @@ public interface UserService{
      * @return ： 修改结果
      */
     boolean update(UpdateUserForm updateUserForm);
+
 }

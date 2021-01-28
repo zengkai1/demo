@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.co.LoginUser;
+import com.example.demo.co.shiro.UserContext;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.form.user.SaveUserForm;
@@ -22,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -59,13 +61,15 @@ public class LoginController {
      */
     @GetMapping("/login")
     @ApiOperation(value = "用户登入", notes = "用户登入")
-    public Result<String> login(LoginUser user, HttpServletResponse response) {
+    public Result<UserContext> login(LoginUser user, HttpServletRequest request, HttpServletResponse response) {
         if (StringUtils.isEmpty(user.getUsername()) || StringUtils.isEmpty(user.getPassword())) {
             return Result.error().setMsg("请输入用户名和密码登入系统");
         }
-        loginService.login(user,response);
-        String token = response.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
-        return Result.ok().setMsg("登陆成功").setData(token).setDescription("JWT Token信息");
+        Boolean isLogin = loginService.login(user, request, response);
+        if (isLogin && Objects.nonNull(UserContext.getCurrentUser())){
+            return Result.ok().setMsg("登陆成功").setData(UserContext.getCurrentUser()).setDescription("UserContext 信息");
+        }
+        return Result.handleFailure("登陆失败！账号或密码不正确");
     }
 
     /**
@@ -104,7 +108,6 @@ public class LoginController {
         if(subject.isAuthenticated()) {
             subject.logout();
         }
-        System.out.println("退出登录成功");
         return Result.ok().setMsg("退出登录");
     }
 
@@ -126,6 +129,13 @@ public class LoginController {
             return Result.handleSuccess("解除成功");
         }
         return Result.handleFailure("解除失败，该用户未被锁定");
+    }
+
+    @ApiModelProperty(value = "刷新token",notes = "刷新token")
+    @GetMapping("/refreshToken")
+    public Result<String> refreshToken(){
+        String accessToken = UserContext.getCurrentUser().getAccessToken();
+        return loginService.refreshToken(accessToken);
     }
 
     /*

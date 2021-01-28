@@ -1,6 +1,7 @@
 package com.example.demo.util;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -36,7 +37,7 @@ import java.util.List;
 public class JwtUtil {
 
     @Autowired
-     JwtProperties jwtProperties;
+    JwtProperties jwtProperties;
 
     @Autowired
     private static JwtUtil jwtUtil;
@@ -61,7 +62,7 @@ public class JwtUtil {
      * @return boolean
      */
     public static boolean verify(String token){
-        token = token.replace("Bearer ","");
+        token = token.replace(SecurityConstants.TOKEN_PREFIX,"");
         String account = getClaim(token, SecurityConstants.ACCOUNT);
         String secret = account + jwtUtil.jwtProperties.getSecretKey();;
         Algorithm algorithm = Algorithm.HMAC256(secret);
@@ -83,7 +84,7 @@ public class JwtUtil {
         //账号加JWT私钥加密
         String secret = account + jwtUtil.jwtProperties.getSecretKey();
         //此处过期时间/毫秒
-        Date date = new Date(System.currentTimeMillis() + jwtUtil.jwtProperties.getTokenExpireTime()/* * 60 * 1000L*/);
+        Date date = new Date(System.currentTimeMillis() + jwtUtil.jwtProperties.getTokenExpireTime() * 60 * 1000L);
         Algorithm algorithm = Algorithm.HMAC256(secret);
         return JWT.create().withClaim(SecurityConstants.ACCOUNT,account)
                 .withClaim(SecurityConstants.CURRENT_TIME_MILLIS,currentTimeMillis)
@@ -99,13 +100,16 @@ public class JwtUtil {
      */
     public static String getClaim(String token,String claim){
         try{
-            token = token.replace("Bearer ","");
+            if (StrUtil.isBlank(token)){
+                throw new ZKCustomException("未携带请求token！");
+            }
+            token = token.replace(SecurityConstants.TOKEN_PREFIX,"");
             DecodedJWT jwt = JWT.decode(token);
             String str = jwt.getClaim(claim).asString();
             return str;
         }catch (JWTDecodeException e){
             throw new ZKCustomException(e.getMessage());
-       //     return null;
+            //     return null;
         }
     }
 

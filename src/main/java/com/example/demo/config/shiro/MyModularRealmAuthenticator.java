@@ -1,4 +1,3 @@
-/*
 package com.example.demo.config.shiro;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -6,12 +5,12 @@ import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.realm.Realm;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-*/
-/**
+/*
  * <p>
  *  自定义realm认证处理器
  * </p>
@@ -19,8 +18,9 @@ import java.util.stream.Collectors;
  * @author: 曾凯
  * @Version: V1.0
  * @since: 2021/1/4 18:12
- *//*
+ **/
 
+@Component
 public class MyModularRealmAuthenticator extends ModularRealmAuthenticator {
 
     @Override
@@ -39,4 +39,3 @@ public class MyModularRealmAuthenticator extends ModularRealmAuthenticator {
     }
 
 }
-*/

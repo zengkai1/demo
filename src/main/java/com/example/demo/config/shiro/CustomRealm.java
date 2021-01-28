@@ -88,25 +88,25 @@ public class CustomRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken)  {
-
         String token = (String)authenticationToken.getPrincipal();
         String account  = JwtUtil.getClaim(token, SecurityConstants.ACCOUNT);
         if (account == null) {
-            throw new AuthenticationException("token invalid");
+            throw new AuthenticationException("token无效!");
         }
         LoginUser user = userService.qryUserByUsername(account);
         if (user == null) {
-            throw new AuthenticationException("user didn't existed!");
+            throw new AuthenticationException("用户不存在!");
         }
-        String refreshTokenCacheKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
-        String currentTimeMillisRedis = (String)redisTemplate.opsForValue().get(refreshTokenCacheKey);
-        if (StrUtil.isNotEmpty(currentTimeMillisRedis)) {
+        String tokenKey = SecurityConstants.PREFIX_SHIRO_CACHE + account;
+        String refreshToken = (String)redisTemplate.opsForValue().get(tokenKey);
+        if (StrUtil.isNotEmpty(refreshToken)) {
+            String refreshTime = JwtUtil.getClaim(refreshToken, SecurityConstants.CURRENT_TIME_MILLIS);
             // 获取AccessToken时间戳，与RefreshToken的时间戳对比
-            if (JwtUtil.getClaim(token, SecurityConstants.CURRENT_TIME_MILLIS).equals(currentTimeMillisRedis)) {
-                SimpleAuthenticationInfo shiroRealm = new SimpleAuthenticationInfo(token, token, "customRealm");
+            if (JwtUtil.getClaim(token, SecurityConstants.CURRENT_TIME_MILLIS).equals(refreshTime)) {
+                SimpleAuthenticationInfo shiroRealm = new SimpleAuthenticationInfo(token, account, "customRealm");
                 return shiroRealm;
             }
         }
-        throw new AuthenticationException("Token expired or incorrect.");
+        throw new AuthenticationException("Token已过期或已失效");
     }
 }

@@ -3,16 +3,21 @@ package com.example.demo.config.jwt;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.example.demo.co.shiro.AppShiroUser;
 import com.example.demo.co.shiro.UserContext;
+import com.example.demo.config.shiro.CustomRealm;
 import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
+import com.example.demo.redis.RedisLockUtil;
 import com.example.demo.util.JwtUtil;
 import com.example.demo.util.RequestIpUtils;
 import com.example.demo.util.Result;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,20 +100,30 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
                         msg = throwable.getMessage();
                     }
                 }
-                this.illgalRequest(request, response, msg);
+                this.illgalRequest(response, msg);
                 return false;
             }
         }
-        return false;
+        return true;
+    }
+
+    @Override
+    protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
+        String token = this.getAuthzHeader(request);
+        return token != null;
+    }
+
+    @Override
+    public boolean onPreHandle(ServletRequest request, ServletResponse response, Object mappedValue) throws Exception {
+        return this.isAccessAllowed(request, response, mappedValue) || this.onAccessDenied(request, response, mappedValue);
     }
 
     /**
      * 401非法请求
-     * @param request
      * @param response
      * @param msg
      */
-    private void illgalRequest(ServletRequest request, ServletResponse response, String msg) {
+    private void illgalRequest(ServletResponse response, String msg) {
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
         httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
         httpServletResponse.setCharacterEncoding("UTF-8");
@@ -117,8 +132,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         try {
             out = httpServletResponse.getWriter();
             Result result = new Result();
-            result.setCode(StatusCode.ILLEGAL.getCode()).setMsg(msg);
-            out.append(JSONUtil.toJsonStr(JSONUtil.parse(result)));
+            result.setCode(StatusCode.ILLEGAL.getCode()).setMsg(msg).setDescription("非法请求").setData(null);
+            out.append(JSON.toJSONString(result));
         } catch (IOException e) {
             LOGGER.error("返回Response信息出现IOException异常:" + e.getMessage());
         } finally {
@@ -138,16 +153,49 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
     @Override
     protected boolean executeLogin(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest servletRequest = (HttpServletRequest) request;
+        //登陆暂时放行
         String authorization = servletRequest.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
         CustomToken customToken = new CustomToken(authorization);
         //提交realm进行登入，如果错误则会抛出异常被捕获
-        getSubject(request,response).login(customToken);
+        Subject subject = SecurityUtils.getSubject();
+        subject.login(customToken);
         //绑定上下文
         String account = JwtUtil.getClaim(authorization,SecurityConstants.ACCOUNT);
         AppShiroUser appShiroUser = new AppShiroUser(account,customToken.getPrincipal().toString(), RequestIpUtils.getIpAddr(servletRequest));
         UserContext userContext= new UserContext(appShiroUser);
+        //检查是否需要更好token，需要则重新颁发
+        refreshTokenIfNeed(account,authorization,response);
         //如果没有抛出异常则代表登入成功，返回true
         return true;
+    }
+
+    /**
+     * 检查是否需要刷新token
+     * @param account ： 账号
+     * @param authorization ： 原token
+     * @param response ： 响应
+     * @return 是否需要刷新token
+     */
+    private boolean refreshTokenIfNeed(String account, String authorization, ServletResponse response) {
+        String lockKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
+        try {
+            Long currentTimeMillis= System.currentTimeMillis();
+            //检查刷新规则
+            if(this.refreshCheck(authorization,currentTimeMillis)){
+                RedisLockUtil.lock(lockKey,jwtProperties.getRefreshCheckTime(),TimeUnit.MINUTES);
+                LOGGER.info(String.format("为账户%s颁发新的令牌", account));
+                String newToken = JwtUtil.sign(account, String.valueOf(currentTimeMillis));
+                HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+                httpServletResponse.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, newToken);
+                httpServletResponse.setHeader("Access-Control-Expose-Headers", SecurityConstants.REQUEST_AUTH_HEADER);
+                RedisLockUtil.unlock(lockKey);
+                return true;
+            }
+        }catch (Exception e){
+            LOGGER.info("检查是否需要刷新token异常:{}",e.getMessage());
+            RedisLockUtil.unlock(lockKey);
+        }
+        return false;
     }
 
     /**
@@ -168,7 +216,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      * @param response
      * @return boolean
      */
-    private boolean refreshToken(ServletRequest request,ServletResponse response){
+    public boolean refreshToken(ServletRequest request,ServletResponse response){
         //获取AccessToken(shiro中getAuthzHeader方法已实现)
         String token = this.getAuthzHeader(request);
         //获取当前token的账号信息

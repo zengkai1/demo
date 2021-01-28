@@ -7,3 +7,5 @@ token:
   shiroCacheExpireTime: 120
   # token加密密钥
   secretKey: demokey
+  # 更新令牌实际 分钟
+  refreshCheckTime: 120

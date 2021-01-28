@@ -29,4 +29,6 @@ public interface SecurityConstants {
     String CURRENT_TIME_MILLIS = "currentTimeMillis";
 
     String ACCESS_CONTROL_EXPOSE = "Access-Control-Expose-Headers";
+
+    String TOKEN_PREFIX = "Bearer ";
 }

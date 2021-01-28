@@ -19,8 +19,35 @@ public class CustomToken implements AuthenticationToken {
      */
     private String token;
 
+    /**
+     * 用户名
+     */
+    private String username;
+
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 用户名
+     * @param token
+     */
     public CustomToken(String token){
         this.token = token;
+    }
+
+    public CustomToken(String username,String password){
+        this.password = password;
+        this.username = username;
+    }
+
+    public String getPassword(){
+        return this.password;
+    }
+
+    public String getUsername(){
+        return this.username;
     }
 
     @Override

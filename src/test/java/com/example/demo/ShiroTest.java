@@ -1,5 +1,8 @@
 package com.example.demo;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.example.demo.constants.interfaces.SecurityConstants;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.mgt.DefaultSecurityManager;
@@ -7,8 +10,12 @@ import org.apache.shiro.realm.SimpleAccountRealm;
 import org.apache.shiro.subject.Subject;
 import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -19,9 +26,31 @@ import java.util.Date;
  * @Version: V1.0
  * @since: 2020/12/14 10:05
  */
+@SpringBootTest
 public class ShiroTest {
 
     SimpleAccountRealm simpleAccountRealm = new SimpleAccountRealm();
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Test
+    public void getToken(){
+        String currentTimeMillis = String.valueOf(System.currentTimeMillis());
+        //生成token
+        String account = "zengkai";
+        //账号加JWT私钥加密
+        String secret = account + "demokey";
+        //此处过期时间/毫秒
+        Date date = new Date(System.currentTimeMillis() + 1440 * 60 * 1000L);
+        Algorithm algorithm = Algorithm.HMAC256(secret);
+        String sign = JWT.create().withClaim(SecurityConstants.ACCOUNT, account)
+                .withClaim(SecurityConstants.CURRENT_TIME_MILLIS, currentTimeMillis)
+                .withExpiresAt(date)
+                .sign(algorithm);
+        redisTemplate.opsForValue().set("demo:security:refresh_token:"+account,currentTimeMillis,120, TimeUnit.MINUTES);
+        System.out.println(sign);
+    }
 
     @Test
     public void testAuthentication() {

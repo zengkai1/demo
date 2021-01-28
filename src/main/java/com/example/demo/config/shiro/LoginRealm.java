@@ -133,7 +133,7 @@ public class LoginRealm extends AuthorizingRealm{
                 throw new AuthenticationException("token无效!");
             }
             if (JwtUtil.verify(token)) {
-                return new SimpleAuthenticationInfo(token, token, "customRealm");
+                return new SimpleAuthenticationInfo(token, account, "customRealm");
             }
             throw new AuthenticationException("token已失效或不匹配.");
         }else {
@@ -158,57 +158,7 @@ public class LoginRealm extends AuthorizingRealm{
         } else {
             throw new AuthenticationException("A CredentialsMatcher must be configured in order to verify credentials during authentication.  If you do not wish for credentials to be examined, you can configure an " + AllowAllCredentialsMatcher.class.getName() + " instance.");
         }
-        limitLogin(token.getPrincipal().toString());
     }
 
-    /**
-     * 每日登陆限制，若超出限制则抛出异常
-     * @param username ： 用户名
-     * */
-    private void limitLogin(String username){
-        //keyPrefix：存入redis计数器key
-        String keyPrefix = KeyPrefixConstants.LOGIN_COUNT+username;
-        //limitPeriod：间隔多少秒进行访问
-        int limitPeriod = DateTimeUtil.getSeconds();
-        //获取存入redis的str
-        String str = (String)redisTemplate.opsForValue().get(keyPrefix);
-        //允许最大登陆的次数
-        int limtTimeMax = DemoConstants.LIMIT_TIME_MAX;
-        //redis存放时间与计数器map
-        Map<String,Object> result = (Map<String,Object>) JSONUtil.parseObj(str);
-        //获取当前时间
-        String dateTime = DateUtil.offsetSecond(DateUtil.date(), limitPeriod).toString();
-        //获取当前请求HttpServletRequest
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = requestAttributes.getRequest();
-        //获取机器ip
-        String localip = RequestIpUtils.getIpAddr(request);
-        //时间范围内第一次进入计数器重置
-        Integer currentCount = 1;
-        //查询当前计数
-        Map map = new HashMap();
-        map.put("openTime", dateTime);
-        map.put("currentTime",new DateTime().toString());
-        map.put("limitPeriod",limitPeriod);
-        map.put("ip",localip);
-        if (StrUtil.isEmpty(str)){
-            map.put("currentCount", currentCount);
-            redisTemplate.opsForValue().set(keyPrefix, JSONUtil.toJsonStr(map),limitPeriod, TimeUnit.SECONDS);
-        }else {
-            //查询当前计数++
-            currentCount = (Integer)result.get("currentCount");
-            currentCount++;
-            map.put("currentCount", currentCount);
-            if (currentCount > limtTimeMax){
-                //当前解锁倒计时
-                long between = DateUtil.between(DateUtil.parse( result.get("openTime").toString()), DateUtil.parse(new DateTime().toString()), DateUnit.SECOND);
-                //转化为秒，一般倒计时以秒展现较为合适
-                String formatBetween = DateUtil.formatBetween(between * 1000, BetweenFormatter.Level.SECOND);
-                throw new ZKCustomException(StatusCode.FAILURE.getCode(),String.format("登入次数超出限制，上次登陆时间："+result.get("currentTime")+"，登陆ip："+result.get("ip")+"，距离解锁："+formatBetween));
-            }else {
-                redisTemplate.opsForValue().set(keyPrefix, JSONUtil.toJsonStr(map),limitPeriod, TimeUnit.SECONDS);
-            }
-        }
-        log.info("用户正常登陆, 当前已登入{}次",currentCount);
-    }
+
 }
