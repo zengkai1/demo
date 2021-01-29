@@ -52,7 +52,7 @@ public class SystemLogoutFilter extends LogoutFilter {
             String account = JwtUtil.getClaim(authorization, SecurityConstants.ACCOUNT);
             if(StringUtil.isNotEmpty(account)){
                 // 清除可能存在的Shiro权限信息缓存
-                String tokenKey = SecurityConstants.PREFIX_SHIRO_CACHE + account;
+                String tokenKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
                 String token = (String)redisTemplate.opsForValue().get(tokenKey);
                 if (StrUtil.isNotEmpty(token)) {
                    redisTemplate.delete(tokenKey);

@@ -19,9 +19,6 @@ public interface SecurityConstants {
     //JWT-account
     String ACCOUNT = "account";
 
-    //Shiro redis 前缀
-    String PREFIX_SHIRO_CACHE = LOGIN_PREFIX+"cache:";
-
     //redis-key-前缀-shiro:refresh_token
     String PREFIX_SHIRO_REFRESH_TOKEN = LOGIN_PREFIX+"refresh_token:";
 

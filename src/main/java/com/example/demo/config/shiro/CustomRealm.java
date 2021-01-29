@@ -97,8 +97,8 @@ public class CustomRealm extends AuthorizingRealm {
         if (user == null) {
             throw new AuthenticationException("用户不存在!");
         }
-        String tokenKey = SecurityConstants.PREFIX_SHIRO_CACHE + account;
-        String refreshToken = (String)redisTemplate.opsForValue().get(tokenKey);
+        String refreshTokenKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
+        String refreshToken = (String)redisTemplate.opsForValue().get(refreshTokenKey);
         if (StrUtil.isNotEmpty(refreshToken)) {
             String refreshTime = JwtUtil.getClaim(refreshToken, SecurityConstants.CURRENT_TIME_MILLIS);
             // 获取AccessToken时间戳，与RefreshToken的时间戳对比

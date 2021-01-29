@@ -31,4 +31,11 @@ public interface LoginService {
      * @return 刷新结果
      */
     Result<String> refreshToken(String accessToken);
+
+    /**
+     * 根据用户名获取token信息
+     * @param username 用户名
+     * @return token
+     */
+    Result<String> getTokenByAccount(String username);
 }

@@ -131,7 +131,7 @@ public class LoginController {
         return Result.handleFailure("解除失败，该用户未被锁定");
     }
 
-    @ApiModelProperty(value = "刷新token",notes = "刷新token")
+    @ApiOperation(value = "刷新token",notes = "刷新token")
     @GetMapping("/refreshToken")
     public Result<String> refreshToken(){
         String accessToken = UserContext.getCurrentUser().getAccessToken();
@@ -146,5 +146,16 @@ public class LoginController {
     @GetMapping("/error")
     public Result<String> err(){
         return Result.failure().setMsg("哎哟，爆炸了唷！");
+    }
+
+    /**
+     * 根据用户名获取其token
+     * @param username : 用户名
+     * @return : token
+     */
+    @ApiOperation(value = "根据用户名获取其token",notes = "根据用户名获取其token")
+    @GetMapping("/getTokenByAccount/{username}")
+    public Result<String> getTokenByAccount(@ApiParam(name = "username", value = "用户名",example = "zengkai") @PathVariable("username") String username){
+        return loginService.getTokenByAccount(username);
     }
 }

@@ -1,11 +1,7 @@
 token:
   # token过期时间，单位分钟
-  tokenExpireTime: 120
-  # RefreshToken过期时间，单位分钟 24*60=1440
-  refreshTokenExpireTime: 1440
-  # shiro缓存有效期，单位分钟，2*60=120
-  shiroCacheExpireTime: 120
+  tokenExpireTime: 1440
   # token加密密钥
   secretKey: demokey
   # 更新令牌实际 分钟
-  refreshCheckTime: 120
+  refreshCheckTime: 60

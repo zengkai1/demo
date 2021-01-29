@@ -104,6 +104,7 @@ public class ShiroConfig {
         map.put("/mongo/**","anon");
         map.put("/register","anon");
         map.put("/login","anon");
+        map.put("/getTokenByAccount/**","anon");
         //对所有用户认证，“authc”：url必须经过认证通过才可以访问
         map.put("/logout", "logout");
         map.put("/**", "jwt");

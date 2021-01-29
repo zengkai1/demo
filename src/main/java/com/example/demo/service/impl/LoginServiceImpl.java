@@ -165,8 +165,8 @@ public class LoginServiceImpl implements LoginService {
             if (tokenMillis.equals(currentTimeMillsRedis)){
                 //设置RefreshToken中的时间戳为当前最新时间戳
                 String currentTime = String.valueOf(System.currentTimeMillis());
-                Integer refreshTokenExpireTime = jwtProperties.getRefreshTokenExpireTime();
-                redisTemplate.opsForValue().set(refreshTokenCacheKey,currentTime,refreshTokenExpireTime, TimeUnit.SECONDS);
+                Integer refreshTokenExpireTime = jwtProperties.getTokenExpireTime();
+                redisTemplate.opsForValue().set(refreshTokenCacheKey,currentTime,refreshTokenExpireTime, TimeUnit.MINUTES);
                 //刷新AccessToken为当前最新时间戳
                 accessToken = JwtUtil.sign(account, currentTime);
                 return Result.ok().setMsg("token 刷新成功").setData(accessToken);
@@ -177,6 +177,23 @@ public class LoginServiceImpl implements LoginService {
     }
 
     /**
+     * 根据用户名获取token信息
+     *
+     * @param username 用户名
+     * @return token
+     */
+    @Override
+    public Result<String> getTokenByAccount(String username) {
+        String tokenKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + username;
+        String token = (String) redisTemplate.opsForValue().get(tokenKey);
+        if (StrUtil.isBlank(token)){
+            return Result.handleFailure(String.format("用户 %s token已失效!",username));
+        }
+        return Result.handleSuccess(token);
+    }
+
+
+    /**
      * 登录后更新缓存，生成token，设置响应头部信息
      * @param account
      * @param response
@@ -185,7 +202,7 @@ public class LoginServiceImpl implements LoginService {
         //初始化token
         String token = null;
         //先查询数据库中的token信息
-        String tokenKey = SecurityConstants.PREFIX_SHIRO_CACHE + account;
+        String tokenKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
         token = (String)redisTemplate.opsForValue().get(tokenKey);
         if (StrUtil.isEmpty(token) || !JwtUtil.verify(token)) {
             //替换为:
@@ -197,17 +214,8 @@ public class LoginServiceImpl implements LoginService {
             response.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, SecurityConstants.TOKEN_PREFIX+token);
             response.setHeader(SecurityConstants.ACCESS_CONTROL_EXPOSE, SecurityConstants.REQUEST_AUTH_HEADER);
             //将token存入缓存
-            redisTemplate.opsForValue().set(tokenKey,token,jwtProperties.getRefreshTokenExpireTime(),TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(tokenKey,token,jwtProperties.getRefreshCheckTime(),TimeUnit.MINUTES);
         }
-        //更新RefreshToken缓存的时间戳
-/*        String refreshTokenKey= SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
-        String refreshToken = (String)redisTemplate.opsForValue().get(tokenKey);
-        if (StrUtil.isNotEmpty(refreshToken)) {
-            redisTemplate.delete(refreshTokenKey);
-            redisTemplate.opsForValue().set(refreshTokenKey,currentTimeMillis,jwtProperties.getRefreshTokenExpireTime(), TimeUnit.MINUTES);
-        }else{
-            redisTemplate.opsForValue().set(refreshTokenKey,currentTimeMillis,jwtProperties.getRefreshTokenExpireTime(), TimeUnit.MINUTES);
-        }*/
         //用户认证信息
         Subject subject = SecurityUtils.getSubject();
         subject.login(new CustomToken(token));

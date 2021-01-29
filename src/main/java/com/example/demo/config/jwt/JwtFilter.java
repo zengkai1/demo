@@ -62,7 +62,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      */
     private boolean refreshCheck(String authorization, Long currentTimeMillis) {
         String tokenMillis = JwtUtil.getClaim(authorization, SecurityConstants.CURRENT_TIME_MILLIS);
-        if (currentTimeMillis - Long.parseLong(tokenMillis) > (jwtProperties.getRefreshCheckTime() * 60 * 1000L)) {
+        if (currentTimeMillis - Long.parseLong(tokenMillis) > (jwtProperties.getTokenExpireTime() * 60 * 1000L)) {
             return true;
         }
         return false;
@@ -188,6 +188,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
                 HttpServletResponse httpServletResponse = (HttpServletResponse) response;
                 httpServletResponse.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, newToken);
                 httpServletResponse.setHeader("Access-Control-Expose-Headers", SecurityConstants.REQUEST_AUTH_HEADER);
+                //存入新的token
+
                 RedisLockUtil.unlock(lockKey);
                 return true;
             }
@@ -210,12 +212,13 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         return false;
     }
 
-    /**
+    /*
      * 刷新AccessToken，判断RefreshToken是否过期，未过期就返回新的AccessToken且继续正常访问
      * @param request
      * @param response
      * @return boolean
-     */
+      */
+
     public boolean refreshToken(ServletRequest request,ServletResponse response){
         //获取AccessToken(shiro中getAuthzHeader方法已实现)
         String token = this.getAuthzHeader(request);
@@ -230,8 +233,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
             if (tokenMillis.equals(currentTimeMillsRedis)){
                 //设置RefreshToken中的时间戳为当前最新时间戳
                 String currentTime = String.valueOf(System.currentTimeMillis());
-                Integer refreshTokenExpireTime = jwtProperties.getRefreshTokenExpireTime();
-                redisTemplate.opsForValue().set(refreshTokenCacheKey,currentTime,refreshTokenExpireTime, TimeUnit.SECONDS);
+                Integer refreshTokenExpireTime = jwtProperties.getRefreshCheckTime();
+                redisTemplate.opsForValue().set(refreshTokenCacheKey,currentTime,refreshTokenExpireTime, TimeUnit.MINUTES);
                 //刷新AccessToken为当前最新时间戳
                 token = JwtUtil.sign(account, currentTime);
                 //使用AccessToken再次提交shiroRealm进行认证，如果没有抛出异常则登入成功，返回true

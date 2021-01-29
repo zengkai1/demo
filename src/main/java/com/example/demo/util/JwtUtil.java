@@ -18,11 +18,13 @@ import com.example.demo.exception.ZKCustomException;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.util.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -109,8 +111,6 @@ public class JwtUtil {
             return str;
         }catch (JWTDecodeException e){
             throw new ZKCustomException(e.getMessage());
-            //     return null;
         }
     }
-
 }

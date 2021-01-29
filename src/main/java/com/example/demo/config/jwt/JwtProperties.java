@@ -26,16 +26,6 @@ public class JwtProperties {
     private Integer tokenExpireTime;
 
     /**
-     * 刷新Token过期时间，单位分钟
-     */
-    private Integer refreshTokenExpireTime;
-
-    /**
-     * Shiro缓存有效期，单位分钟
-     */
-    private Integer shiroCacheExpireTime;
-
-    /**
      * token加密密钥
      */
     private String secretKey;
@@ -43,5 +33,5 @@ public class JwtProperties {
     /**
      * 更新令牌时间，单位分钟
      */
-    private Integer refreshCheckTime;
+    public Integer refreshCheckTime;
 }

@@ -37,7 +37,7 @@ public class CustomInterceptor implements HandlerInterceptor {
             logger.info("已放行:{}",request.getRequestURI());
             return true;
         }
-        //鉴权
+/*        //鉴权
         String token = request.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
         if (StrUtil.isEmpty(token)){
             throw new ZKCustomException(StatusCode.ILLEGAL.getCode(),"未携带请求凭证!");
@@ -45,7 +45,7 @@ public class CustomInterceptor implements HandlerInterceptor {
         //匹配token
         if (!JwtUtil.verify(token)){
             throw new ZKCustomException(StatusCode.ILLEGAL.getCode(),"token已失效或不匹配");
-        }
+        }*/
         //获取请求参数
         ServletInputStream inputStream = request.getInputStream();
         byte[] bodyBytes = StreamUtils.copyToByteArray(inputStream);
