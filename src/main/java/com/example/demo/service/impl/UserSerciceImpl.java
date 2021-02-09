@@ -1,6 +1,8 @@
 package com.example.demo.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,19 +10,27 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.User;
+import com.example.demo.co.shiro.AppShiroUser;
+import com.example.demo.co.shiro.UserContext;
 import com.example.demo.co.user.update.UpdateUserForm;
 import com.example.demo.constants.enums.DelFlagEnum;
+import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.exception.ZKCustomException;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.UserService;
+import com.example.demo.util.Result;
 import com.example.demo.util.SnowflakeIdWorkerUtil;
+import com.google.common.collect.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -124,6 +134,25 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         updateWrapper.lambda().eq(true,LoginUser::getId,updateUserForm.getId())
             .set(StrUtil.isNotBlank(updateUserForm.getUsername()),LoginUser::getUsername,updateUserForm.getUsername());
         return this.update(updateWrapper);
+    }
+
+    /**
+     * 获取当前用户的信息
+     *
+     * @return 用户信息
+     */
+    @Override
+    public Result<UserInfoDTO> getUserInfo() {
+        AppShiroUser currentUser = UserContext.getCurrentUser();
+        if (Objects.isNull(currentUser)){
+            return Result.handleFailure("请先登录!");
+        }
+        UserInfoDTO userInfoDTO = new UserInfoDTO();
+        //设置用户属性
+        userInfoDTO.setId(currentUser.getId())
+                    .setAccessToken(currentUser.getAccessToken())
+                    .setIpAddress(currentUser.getIpAddress());
+        return Result.handleSuccess("查询成功!",userInfoDTO);
     }
 
 

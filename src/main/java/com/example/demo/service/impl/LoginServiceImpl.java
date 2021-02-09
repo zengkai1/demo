@@ -149,31 +149,34 @@ public class LoginServiceImpl implements LoginService {
     /**
      * 刷新token
      *
-     * @param accessToken ： 准入token
      * @return 刷新结果
      */
     @Override
-    public Result<String> refreshToken(String accessToken) {
-        //获取当前token的账号信息
-        String account = JwtUtil.getClaim(accessToken, SecurityConstants.ACCOUNT);
-        String refreshTokenCacheKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
-        //判断Redis中RefreshToken是否存在
-        String currentTimeMillsRedis  = (String)redisTemplate.opsForValue().get(refreshTokenCacheKey);
-        if (StrUtil.isNotEmpty(currentTimeMillsRedis)){
-            //相比如果一致，进行AccessToken刷新
-            String tokenMillis = JwtUtil.getClaim(accessToken, SecurityConstants.CURRENT_TIME_MILLIS);
-            if (tokenMillis.equals(currentTimeMillsRedis)){
-                //设置RefreshToken中的时间戳为当前最新时间戳
-                String currentTime = String.valueOf(System.currentTimeMillis());
-                Integer refreshTokenExpireTime = jwtProperties.getTokenExpireTime();
-                redisTemplate.opsForValue().set(refreshTokenCacheKey,currentTime,refreshTokenExpireTime, TimeUnit.MINUTES);
-                //刷新AccessToken为当前最新时间戳
-                accessToken = JwtUtil.sign(account, currentTime);
-                return Result.ok().setMsg("token 刷新成功").setData(accessToken);
+    public Result<String> refreshToken() {
+        try {
+            String accessToken = UserContext.getCurrentUser().getAccessToken();
+            //获取当前token的账号信息
+            String account = JwtUtil.getClaim(accessToken, SecurityConstants.ACCOUNT);
+            String refreshTokenCacheKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
+            //判断Redis中RefreshToken是否存在
+            String currentTimeMillsRedis  = (String)redisTemplate.opsForValue().get(refreshTokenCacheKey);
+            if (StrUtil.isNotEmpty(currentTimeMillsRedis)){
+                //相比如果一致，进行AccessToken刷新
+                accessToken = accessToken.replace(SecurityConstants.TOKEN_PREFIX,"");;
+                if (accessToken.equals(currentTimeMillsRedis)){
+                    //设置RefreshToken中的时间戳为当前最新时间戳
+                    String currentTime = String.valueOf(System.currentTimeMillis());
+                    Integer refreshTokenExpireTime = jwtProperties.getTokenExpireTime();
+                    //刷新AccessToken为当前最新时间戳
+                    accessToken = JwtUtil.sign(account, currentTime);
+                    redisTemplate.opsForValue().set(refreshTokenCacheKey,accessToken,refreshTokenExpireTime, TimeUnit.MINUTES);
+                    return Result.ok().setMsg("token 刷新成功").setData(accessToken);
+                }
             }
+        }catch (Exception e){
+            log.info("刷新token异常:{}",e.getMessage());
         }
-        //未过期
-        return Result.handleFailure("token 无效或已过期!");
+        return Result.handleFailure("当前用户的token无效或已过期!");
     }
 
     /**

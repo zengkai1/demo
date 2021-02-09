@@ -8,10 +8,10 @@ import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.example.demo.co.shiro.AppShiroUser;
 import com.example.demo.co.shiro.UserContext;
-import com.example.demo.config.shiro.CustomRealm;
 import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
+import com.example.demo.exception.ZKCustomException;
 import com.example.demo.redis.RedisLockUtil;
 import com.example.demo.util.JwtUtil;
 import com.example.demo.util.RequestIpUtils;
@@ -80,37 +80,37 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
         HttpServletRequest request1 = (HttpServletRequest) request;
         System.out.println("请求路径："+  request1.getRequestURI());
-        if (isLoginAttempt(request,response)){
-            try {
-                this.executeLogin(request,response);
-            } catch (Exception e) {
-                String msg = e.getMessage();
-                Throwable throwable = e.getCause();
-                if (throwable != null && throwable instanceof SignatureVerificationException) {
-                    msg = "Token或者密钥不正确(" + throwable.getMessage() + ")";
-                } else if (throwable != null && throwable instanceof TokenExpiredException) {
-                    // AccessToken已过期
-                    if (this.refreshToken(request, response)) {
-                        return true;
-                    } else {
-                        msg = "Token已过期(" + throwable.getMessage() + ")";
-                    }
-                } else {
-                    if (throwable != null) {
-                        msg = throwable.getMessage();
-                    }
-                }
-                this.illgalRequest(response, msg);
-                return false;
+        try {
+            if (isLoginAttempt(request,response)){
+                return this.executeLogin(request, response);
             }
+        }catch (Exception e) {
+            String msg = e.getMessage();
+            Throwable throwable = e.getCause();
+            if (throwable != null && throwable instanceof SignatureVerificationException) {
+                msg = "Token或者密钥不正确(" + throwable.getMessage() + ")";
+            } else if (throwable != null && throwable instanceof TokenExpiredException) {
+                // AccessToken已过期
+                if (this.refreshToken(request, response)) {
+                    return true;
+                } else {
+                    msg = "Token已过期(" + throwable.getMessage() + ")";
+                }
+            } else {
+                if (throwable != null) {
+                    msg = throwable.getMessage();
+                }
+            }
+            this.illgalRequest(response, msg);
+            return false;
         }
         return true;
-    }
+}
 
     @Override
     protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
         String token = this.getAuthzHeader(request);
-        return token != null;
+        return token!=null;
     }
 
     @Override
@@ -217,7 +217,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      * @param request
      * @param response
      * @return boolean
-      */
+     */
 
     public boolean refreshToken(ServletRequest request,ServletResponse response){
         //获取AccessToken(shiro中getAuthzHeader方法已实现)

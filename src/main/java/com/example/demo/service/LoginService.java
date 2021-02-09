@@ -27,10 +27,9 @@ public interface LoginService {
 
     /**
      * 刷新token
-     * @param accessToken ： 准入token
      * @return 刷新结果
      */
-    Result<String> refreshToken(String accessToken);
+    Result<String> refreshToken();
 
     /**
      * 根据用户名获取token信息

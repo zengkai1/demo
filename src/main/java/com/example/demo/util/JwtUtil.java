@@ -1,30 +1,20 @@
 package com.example.demo.util;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.baomidou.mybatisplus.extension.api.R;
-import com.example.demo.co.LoginUser;
 import com.example.demo.config.jwt.JwtProperties;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
-import com.google.common.collect.Lists;
-import io.micrometer.core.instrument.util.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -36,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @since: 2020/12/30 14:21
  */
 @Component
+@Slf4j
 public class JwtUtil {
 
     @Autowired
@@ -71,7 +62,6 @@ public class JwtUtil {
         JWTVerifier verifier = JWT.require(algorithm)
                 .withClaim(SecurityConstants.ACCOUNT, account)
                 .build();
-        //JWTVerifier verifier = JWT.require(algorithm).build();
         verifier.verify(token);
         return true;
     }
@@ -110,7 +100,8 @@ public class JwtUtil {
             String str = jwt.getClaim(claim).asString();
             return str;
         }catch (JWTDecodeException e){
-            throw new ZKCustomException(e.getMessage());
+            log.info("用户token解析异常:{}",e.getMessage());
+            throw new ZKCustomException("用户token解析异常!");
         }
     }
 }

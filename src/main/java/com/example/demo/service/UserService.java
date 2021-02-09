@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.User;
 import com.example.demo.co.user.update.UpdateUserForm;
+import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.util.Result;
@@ -63,4 +64,9 @@ public interface UserService{
      */
     boolean update(UpdateUserForm updateUserForm);
 
+    /**
+     * 获取当前用户的信息
+     * @return 用户信息
+     */
+    Result<UserInfoDTO> getUserInfo();
 }

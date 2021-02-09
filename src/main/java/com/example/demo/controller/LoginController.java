@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import cn.hutool.core.util.StrUtil;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.shiro.UserContext;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
@@ -131,12 +132,16 @@ public class LoginController {
         return Result.handleFailure("解除失败，该用户未被锁定");
     }
 
+    /**
+     * 刷新token
+     * @return token信息
+     */
     @ApiOperation(value = "刷新token",notes = "刷新token")
     @GetMapping("/refreshToken")
     public Result<String> refreshToken(){
-        String accessToken = UserContext.getCurrentUser().getAccessToken();
-        return loginService.refreshToken(accessToken);
+        return loginService.refreshToken();
     }
+
 
     /*
      * 错误页面

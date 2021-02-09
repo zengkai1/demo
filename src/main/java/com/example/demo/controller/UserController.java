@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.user.update.UpdateUserForm;
+import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.service.UserService;
 import com.example.demo.util.Result;
@@ -11,6 +12,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -68,5 +71,17 @@ public class UserController {
        }
        return Result.handleFailure("修改失败");
     }
+
+
+    /**
+     * 获取当前登陆用户信息
+     * @return
+     */
+    @ApiOperation(value = "获取用户信息",notes = "刷新token")
+    @GetMapping("/getUserInfo")
+    public Result<UserInfoDTO> getUserInfo(){
+        return userService.getUserInfo();
+    }
+
 }
 
