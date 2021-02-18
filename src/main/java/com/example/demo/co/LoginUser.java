@@ -40,6 +40,9 @@ public class LoginUser implements Serializable {
     @ApiModelProperty(value = "用户密码",example = "123456")
     private String password;
 
+    @ApiModelProperty(value = "手机号",example = "18772100224")
+    private String phone;
+
     @TableField(value = "del_flag", fill = FieldFill.INSERT)
     @TableLogic
     @ApiModelProperty(value = "删除标记",hidden = true,example = "0")

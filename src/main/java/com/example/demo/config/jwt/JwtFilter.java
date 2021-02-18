@@ -62,7 +62,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      */
     private boolean refreshCheck(String authorization, Long currentTimeMillis) {
         String tokenMillis = JwtUtil.getClaim(authorization, SecurityConstants.CURRENT_TIME_MILLIS);
-        if (currentTimeMillis - Long.parseLong(tokenMillis) > (jwtProperties.getTokenExpireTime() * 60 * 1000L)) {
+        if (currentTimeMillis - Long.parseLong(tokenMillis) < (jwtProperties.getTokenExpireTime() * 60 * 1000L)) {
             return true;
         }
         return false;
@@ -155,16 +155,14 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         HttpServletRequest servletRequest = (HttpServletRequest) request;
         //登陆暂时放行
         String authorization = servletRequest.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
+        String account = JwtUtil.getClaim(authorization,SecurityConstants.ACCOUNT);
         CustomToken customToken = new CustomToken(authorization);
         //提交realm进行登入，如果错误则会抛出异常被捕获
         Subject subject = SecurityUtils.getSubject();
         subject.login(customToken);
         //绑定上下文
-        String account = JwtUtil.getClaim(authorization,SecurityConstants.ACCOUNT);
         AppShiroUser appShiroUser = new AppShiroUser(account,customToken.getPrincipal().toString(), RequestIpUtils.getIpAddr(servletRequest));
         UserContext userContext= new UserContext(appShiroUser);
-        //检查是否需要更好token，需要则重新颁发
-        refreshTokenIfNeed(account,authorization,response);
         //如果没有抛出异常则代表登入成功，返回true
         return true;
     }
@@ -177,7 +175,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      * @return 是否需要刷新token
      */
     private boolean refreshTokenIfNeed(String account, String authorization, ServletResponse response) {
-        String lockKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
+        String tokenKey = SecurityConstants.PREFIX_SHIRO_REFRESH_TOKEN + account;
+        String lockKey = SecurityConstants.REDIS_LOCK + account;
         try {
             Long currentTimeMillis= System.currentTimeMillis();
             //检查刷新规则
@@ -189,7 +188,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
                 httpServletResponse.setHeader(SecurityConstants.REQUEST_AUTH_HEADER, newToken);
                 httpServletResponse.setHeader("Access-Control-Expose-Headers", SecurityConstants.REQUEST_AUTH_HEADER);
                 //存入新的token
-
+                redisTemplate.opsForValue().set(tokenKey,currentTimeMillis,jwtProperties.getRefreshCheckTime(),TimeUnit.MINUTES);
                 RedisLockUtil.unlock(lockKey);
                 return true;
             }

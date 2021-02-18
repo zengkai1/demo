@@ -28,4 +28,6 @@ public interface SecurityConstants {
     String ACCESS_CONTROL_EXPOSE = "Access-Control-Expose-Headers";
 
     String TOKEN_PREFIX = "Bearer ";
+
+    String REDIS_LOCK = LOGIN_PREFIX + "redis_lock:";
 }
