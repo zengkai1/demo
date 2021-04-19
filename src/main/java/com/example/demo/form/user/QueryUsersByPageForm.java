@@ -25,13 +25,13 @@ public class QueryUsersByPageForm implements Serializable {
     /**
      * 查询每页数目
      */
-    @ApiModelProperty(value = "查询每页数目", required = true)
+    @ApiModelProperty(value = "查询每页数目")
     private Integer limit = 10;
 
     /**
      * 查询页目
      */
-    @ApiModelProperty(value = "查询页目", required = true)
+    @ApiModelProperty(value = "查询页目")
     private Integer currentPage = 1;
 
     /**

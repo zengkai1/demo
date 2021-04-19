@@ -23,7 +23,7 @@ public interface LoginService {
      * 用户登陆
      * @param user : 用户信息
      */
-    Boolean login(LoginUser user, HttpServletRequest request, HttpServletResponse response);
+    Result<UserContext> login(LoginUser user, HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 刷新token
@@ -37,4 +37,11 @@ public interface LoginService {
      * @return token
      */
     Result<String> getTokenByAccount(String username);
+
+    /**
+     * 发送登录验证码(邮箱)
+     * @param username：用户名
+     * @return 验证码
+     */
+    Result<String> sendLoginCode(String username);
 }

@@ -1,36 +1,29 @@
 package com.example.demo.controller;
 
-import cn.hutool.core.util.StrUtil;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.shiro.UserContext;
+import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
-import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
-import com.example.demo.util.AppSecurityUtils;
 import com.example.demo.util.MD5SaltUtil;
 import com.example.demo.util.Result;
 import io.swagger.annotations.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>
@@ -66,11 +59,21 @@ public class LoginController {
         if (StringUtils.isEmpty(user.getUsername()) || StringUtils.isEmpty(user.getPassword())) {
             return Result.error().setMsg("请输入用户名和密码登入系统");
         }
-        Boolean isLogin = loginService.login(user, request, response);
-        if (isLogin && Objects.nonNull(UserContext.getCurrentUser())){
-            return Result.ok().setMsg("登陆成功").setData(UserContext.getCurrentUser()).setDescription("UserContext 信息");
+       return loginService.login(user, request, response);
+    }
+
+    /**
+     * 发送登录验证码(邮箱)
+     * @param username：用户名
+     * @return 验证码
+     */
+    @GetMapping("/sendLoginCode/{username}")
+    @ApiOperation(value = "发送登录验证码(邮箱)", notes = "发送登录验证码(邮箱)")
+    public Result<String> sendLoginCode(@ApiParam(name = "username", value = "用户名",example = "zengkai123") @PathVariable("username") String username){
+        if (StringUtils.isEmpty(username)) {
+            return Result.error().setMsg("用户名不能为空");
         }
-        return Result.handleFailure("登陆失败！账号或密码不正确");
+       return loginService.sendLoginCode(username);
     }
 
     /**
@@ -78,13 +81,18 @@ public class LoginController {
      * @param userForm ： 用户提交表单
      * @return ： 注册结果
      */
-    @RequestMapping(value = "/register" ,method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/register")
     @ApiOperation(value = "用户注册", notes = "用户注册")
-    public Result<String> register(@Validated @RequestBody SaveUserForm userForm){
+    public Result<String> register(@Valid @RequestBody SaveUserForm userForm){
         //查询用户名是否重复
         LoginUser user = userService.qryUserByUsername(userForm.getUsername());
         if (Objects.nonNull(user)){
             return Result.failure().setMsg("系统已存在该账号，请重新输入");
+        }
+        //查询手机号是否重复
+        user = userService.qryUserByPhone(userForm.getPhone());
+        if (Objects.nonNull(user)){
+            return Result.failure().setMsg("系统已存在该手机号，请重新输入");
         }
         //密码加密
         userForm.setPassword(MD5SaltUtil.encrypt(userForm.getPassword()));

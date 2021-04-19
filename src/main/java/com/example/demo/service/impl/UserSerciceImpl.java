@@ -1,8 +1,11 @@
 package com.example.demo.service.impl;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -14,24 +17,29 @@ import com.example.demo.co.shiro.AppShiroUser;
 import com.example.demo.co.shiro.UserContext;
 import com.example.demo.co.user.update.UpdateUserForm;
 import com.example.demo.constants.enums.DelFlagEnum;
+import com.example.demo.constants.interfaces.SecurityConstants;
+import com.example.demo.dto.user.LoginUserDTO;
 import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.exception.ZKCustomException;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.UserService;
+import com.example.demo.util.DateTimeUtil;
 import com.example.demo.util.Result;
 import com.example.demo.util.SnowflakeIdWorkerUtil;
-import com.google.common.collect.Lists;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,6 +56,8 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 根据用户ID查询用户信息
@@ -71,6 +81,7 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         LoginUser user = new LoginUser();
         BeanUtils.copyProperties(userForm,user);
         user.setId(SnowflakeIdWorkerUtil.getSnowId());
+        user.setCreatetime(new Date());
         return this.save(user);
     }
 
@@ -82,12 +93,19 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
      */
     @Override
     public LoginUser qryUserByUsername(String username) {
-        LoginUser loginUser = new LoginUser();
         QueryWrapper<LoginUser> queryWrapper = new QueryWrapper();
         queryWrapper.lambda().eq(StrUtil.isNotBlank(username),LoginUser::getUsername,username)
                 .eq(LoginUser::getDelFlag, DelFlagEnum.NO.getCode());
         LoginUser one = this.getOne(queryWrapper);
         return one;
+    }
+
+    @Override
+    public LoginUser qryUserByPhone(String phone) {
+        QueryWrapper<LoginUser> queryWrapper = new QueryWrapper();
+        queryWrapper.lambda().eq(LoginUser::getPhone,phone)
+                .eq(LoginUser::getDelFlag, DelFlagEnum.NO.getCode());
+        return this.getOne(queryWrapper);
     }
 
 
@@ -97,15 +115,32 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
      * @return ：用户分页信息
      */
     @Override
-    public IPage<LoginUser> qryUsersByPage(QueryUsersByPageForm queryUsersByPageForm) {
+    public IPage<LoginUserDTO> qryUsersByPage(QueryUsersByPageForm queryUsersByPageForm) {
         IPage<LoginUser> userPage = new Page<>();
         userPage.setSize(queryUsersByPageForm.getLimit())
                 .setCurrent(queryUsersByPageForm.getCurrentPage());
         QueryWrapper<LoginUser> queryWrapper = new QueryWrapper();
-        queryWrapper.lambda().like(StrUtil.isNotBlank(queryUsersByPageForm.getUsername()),LoginUser::getUsername,queryUsersByPageForm.getUsername());
-        IPage<LoginUser> page = this.page(userPage, queryWrapper);
-        return page;
+        queryWrapper.lambda().like(StrUtil.isNotBlank(queryUsersByPageForm.getUsername()), LoginUser::getUsername, queryUsersByPageForm.getUsername());
+        userPage= this.page(userPage, queryWrapper);
+        //转化为需要的dto对象
+        IPage<LoginUserDTO> userDTOIPage = new Page<>();
+        BeanUtils.copyProperties(userPage,userDTOIPage);
+        //时间格式转化
+        List<LoginUserDTO> loginUserDTOS = JSONUtil.toList(JSONUtil.parseArray(userDTOIPage.getRecords()), LoginUserDTO.class);
+        loginUserDTOS.forEach(loginUserDTO -> {
+            if (Objects.nonNull(loginUserDTO.getCreatetime())){
+                String createtime = DateTimeUtil.dateStrConver(loginUserDTO.getCreatetime());
+                loginUserDTO.setCreatetime(createtime);
+            }
+            if (Objects.nonNull(loginUserDTO.getUpdatetime())){
+                String updatetime = DateTimeUtil.dateStrConver(loginUserDTO.getUpdatetime());
+                loginUserDTO.setUpdatetime(updatetime);
+            }
+        });
+        userDTOIPage.setRecords(loginUserDTOS);
+        return userDTOIPage;
     }
+
 
     /**
      * 根据用户ID删除用户
@@ -131,8 +166,8 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
     @Override
     public boolean update(UpdateUserForm updateUserForm) {
         UpdateWrapper<LoginUser> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.lambda().eq(true,LoginUser::getId,updateUserForm.getId())
-            .set(StrUtil.isNotBlank(updateUserForm.getUsername()),LoginUser::getUsername,updateUserForm.getUsername());
+        updateWrapper.lambda().eq(true,LoginUser::getUsername,updateUserForm.getUsername())
+            .set(true,LoginUser::getPhone,updateUserForm.getPhone());
         return this.update(updateWrapper);
     }
 
@@ -143,15 +178,14 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
      */
     @Override
     public Result<UserInfoDTO> getUserInfo() {
+        //获取token信息
         AppShiroUser currentUser = UserContext.getCurrentUser();
         if (Objects.isNull(currentUser)){
             return Result.handleFailure("请先登录!");
         }
         UserInfoDTO userInfoDTO = new UserInfoDTO();
         //设置用户属性
-        userInfoDTO.setId(currentUser.getId())
-                    .setAccessToken(currentUser.getAccessToken())
-                    .setIpAddress(currentUser.getIpAddress());
+        BeanUtils.copyProperties(currentUser,userInfoDTO);
         return Result.handleSuccess("查询成功!",userInfoDTO);
     }
 

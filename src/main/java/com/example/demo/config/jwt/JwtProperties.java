@@ -34,4 +34,9 @@ public class JwtProperties {
      * 更新令牌时间，单位分钟
      */
     public Integer refreshCheckTime;
+
+    /**
+     * 验证码开关
+     */
+    public boolean verificationCode;
 }

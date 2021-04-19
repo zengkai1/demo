@@ -1,5 +1,7 @@
 package com.example.demo.co.shiro;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.Serializable;
 
 /**
@@ -12,6 +14,7 @@ import java.io.Serializable;
  * @since: 2020/12/31 14:30
  */
 //AutoCloseable自动关闭资源
+@Slf4j
 public class UserContext implements AutoCloseable , Serializable {
 
     static final ThreadLocal<AppShiroUser> current = new ThreadLocal<>();

@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.user.update.UpdateUserForm;
+import com.example.demo.dto.user.LoginUserDTO;
 import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.service.UserService;
@@ -13,7 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -39,10 +41,9 @@ public class UserController {
      */
     @GetMapping("/page")
     @ApiOperation(value = "分页查询用户信息", notes = "分页查询用户信息")
-    private Result<IPage<LoginUser>> page(@Validated QueryUsersByPageForm queryUsersByPageForm){
+    private Result<IPage<LoginUserDTO>> page(@Validated QueryUsersByPageForm queryUsersByPageForm){
        return Result.ok().setData(userService.qryUsersByPage(queryUsersByPageForm));
     }
-
 
     /**
      * 根据用户ID删除用户
@@ -66,6 +67,11 @@ public class UserController {
     @PostMapping("/update")
     @ApiOperation(value = "修改用户信息", notes = "修改用户信息")
     private Result<String> update(@RequestBody UpdateUserForm updateUserForm){
+        //查询手机号是否重复
+        LoginUser loginUser = userService.qryUserByPhone(updateUserForm.getPhone());
+        if (Objects.nonNull(loginUser)){
+            return Result.failure().setMsg("系统已存在该手机号，请重新输入");
+        }
        if ( userService.update(updateUserForm)){
            return Result.handleSuccess("修改成功");
        }

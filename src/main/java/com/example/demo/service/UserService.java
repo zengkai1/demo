@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.User;
 import com.example.demo.co.user.update.UpdateUserForm;
+import com.example.demo.dto.user.LoginUserDTO;
 import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.form.user.SaveUserForm;
@@ -44,11 +45,18 @@ public interface UserService{
     LoginUser qryUserByUsername(String username);
 
     /**
+     * 根据手机号查询用户信息
+     * @param phone ： 手机号
+     * @return ： 登录用户信息
+     */
+    LoginUser qryUserByPhone(String phone);
+
+    /**
      * 分页查询用户信息
      * @param queryUsersByPageForm ： 查询用户信息分页参数
      * @return ：用户分页信息
      */
-    IPage<LoginUser> qryUsersByPage(QueryUsersByPageForm queryUsersByPageForm);
+    IPage<LoginUserDTO> qryUsersByPage(QueryUsersByPageForm queryUsersByPageForm);
 
     /**
      * 根据用户ID删除用户

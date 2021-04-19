@@ -2,8 +2,10 @@ package com.example.demo.co.shiro;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -28,11 +30,25 @@ public class AppShiroUser implements Serializable {
     @ApiModelProperty(value = "用户登录的机器IP")
     private String ipAddress;
 
+    @ApiModelProperty(value = "最近一次登录时间")
+    private String lastLoginTime;
+
+    @ApiModelProperty(value = "今日登录次数")
+    private Integer todayLoginCount;
+
     public AppShiroUser(String id, String accessToken,String ipAddress) {
         super();
         this.id = id;
         this.accessToken = accessToken;
         this.ipAddress = ipAddress;
+    }
+
+    public String getLastLoginTime(){
+        return lastLoginTime;
+    }
+
+    public Integer getTodayLoginCount(){
+        return todayLoginCount;
     }
 
     public String getId() {
@@ -59,6 +75,14 @@ public class AppShiroUser implements Serializable {
      */
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    public void  setLastLoginTime(String lastLoginTime){
+        this.lastLoginTime = lastLoginTime;
+    }
+
+    public void  setTodayLoginCount(Integer todayLoginCount){
+        this.todayLoginCount = todayLoginCount;
     }
 
     /**

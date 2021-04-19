@@ -2,6 +2,7 @@ package com.example.demo.config.jwt;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.server.HttpServerResponse;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
@@ -10,9 +11,11 @@ import com.example.demo.co.shiro.AppShiroUser;
 import com.example.demo.co.shiro.UserContext;
 import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
+import com.example.demo.constants.interfaces.KeyPrefixConstants;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
 import com.example.demo.redis.RedisLockUtil;
+import com.example.demo.util.DateTimeUtil;
 import com.example.demo.util.JwtUtil;
 import com.example.demo.util.RequestIpUtils;
 import com.example.demo.util.Result;
@@ -31,6 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 
@@ -105,7 +110,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
             return false;
         }
         return true;
-}
+    }
 
     @Override
     protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
@@ -162,6 +167,16 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         subject.login(customToken);
         //绑定上下文
         AppShiroUser appShiroUser = new AppShiroUser(account,customToken.getPrincipal().toString(), RequestIpUtils.getIpAddr(servletRequest));
+        //查询上次登录信息
+        //keyPrefix：存入redis计数器key
+        String keyPrefix = KeyPrefixConstants.LOGIN_COUNT+account;
+        //获取存入redis的str
+        String loginInfoByRedis = (String)redisTemplate.opsForValue().get(keyPrefix);
+        if (StrUtil.isNotBlank(loginInfoByRedis)){
+            JSONObject loginJsonObj = JSONUtil.parseObj(JSONUtil.parse(loginInfoByRedis));
+            appShiroUser.setTodayLoginCount(Objects.isNull(loginJsonObj.getInt("currentCount")) ? 0 : loginJsonObj.getInt("currentCount"));
+            appShiroUser.setLastLoginTime(Objects.isNull(loginJsonObj.getStr("currentTime")) ? "" : loginJsonObj.getStr("currentTime"));
+        }
         UserContext userContext= new UserContext(appShiroUser);
         //如果没有抛出异常则代表登入成功，返回true
         return true;

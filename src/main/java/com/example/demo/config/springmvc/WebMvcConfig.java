@@ -40,6 +40,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         pathPatterns.add("/login");
         pathPatterns.add("/logout");
         pathPatterns.add("/doc.html");
+        pathPatterns.add("/error");
+        pathPatterns.add("/register");
+        pathPatterns.add("/sendLoginCode/**");
         registration.excludePathPatterns(pathPatterns);
     }
 

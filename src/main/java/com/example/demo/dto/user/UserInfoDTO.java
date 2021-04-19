@@ -28,4 +28,10 @@ public class UserInfoDTO {
     @ApiModelProperty(value = "用户登录的机器IP")
     private String ipAddress;
 
+    @ApiModelProperty(value = "最近一次登录时间")
+    private String lastLoginTime;
+
+    @ApiModelProperty(value = "今日登录次数")
+    private Integer todayLoginCount;
+
 }

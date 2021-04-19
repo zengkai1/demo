@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
-import com.example.demo.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -33,10 +32,6 @@ public class CustomInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
-        if (request.getRequestURI().equals("/error")){
-            logger.info("已放行:{}",request.getRequestURI());
-            return true;
-        }
         //鉴权
         String token = request.getHeader(SecurityConstants.REQUEST_AUTH_HEADER);
         if (StrUtil.isEmpty(token)){

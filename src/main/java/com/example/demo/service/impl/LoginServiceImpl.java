@@ -1,10 +1,13 @@
 package com.example.demo.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.mail.MailAccount;
+import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
 import com.auth0.jwt.JWT;
@@ -37,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.naming.Context;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -65,17 +69,50 @@ public class LoginServiceImpl implements LoginService {
     private JwtProperties jwtProperties;
 
     @Override
-    public Boolean login(LoginUser user, HttpServletRequest request, HttpServletResponse response) {
+    public Result<UserContext> login(LoginUser user, HttpServletRequest request, HttpServletResponse response) {
+        //验证码校验
+        boolean checkVerificationCode = checkVerificationCode(user.getCode(), user.getUsername(), jwtProperties.isVerificationCode());
+        if (!checkVerificationCode){
+            return Result.handleFailure("登录失败！验证码不正确或已失效！");
+        }
         //账号密码校验
         Boolean checkPassWord = checkPassWord(user.getUsername(), user.getPassword());
         if (checkPassWord){
+            //登录成功设置缓存
             loginSuccess(user.getUsername(), request, response);
         }else{
-            return Boolean.FALSE;
+            return Result.handleFailure("登录失败，密码不正确！");
         }
+        //登录次数校验
         limitLogin(user.getUsername());
-        return Boolean.TRUE;
+        //返回数据
+        return Result.ok().setMsg("登陆成功").setData(UserContext.getCurrentUser()).setDescription("UserContext 信息");
     }
+
+    /**
+     * 验证码是否通过校验
+     * @param code 验证码
+     * @param enable 是否启用
+     * @return boolean 是否通过校验
+     */
+    private boolean checkVerificationCode(String code, String username, boolean enable){
+        //如果未开启验证码校验
+        if (!enable){
+            return true;
+        }
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + username;
+        //获取redis里的验证码
+        String codeCache = (String)redisTemplate.opsForValue().get(codeKey);
+        //如果查询不到或不匹配
+        if (StrUtil.isBlank(codeCache) || !codeCache.equals(code)){
+            return false;
+        }
+        //删除验证码缓存
+        redisTemplate.delete(codeKey);
+        return true;
+    }
+
 
     /**
      * 校验密码
@@ -122,7 +159,8 @@ public class LoginServiceImpl implements LoginService {
         //查询当前计数
         Map map = new HashMap();
         map.put("openTime", dateTime);
-        map.put("currentTime",new DateTime().toString());
+        String currentTime = new DateTime().toString();
+        map.put("currentTime",currentTime);
         map.put("limitPeriod",limitPeriod);
         map.put("ip",localip);
         if (StrUtil.isEmpty(str)){
@@ -135,7 +173,7 @@ public class LoginServiceImpl implements LoginService {
             map.put("currentCount", currentCount);
             if (currentCount > limtTimeMax){
                 //当前解锁倒计时
-                long between = DateUtil.between(DateUtil.parse( result.get("openTime").toString()), DateUtil.parse(new DateTime().toString()), DateUnit.SECOND);
+                long between = DateUtil.between(DateUtil.parse( result.get("openTime").toString()), DateUtil.parse(currentTime), DateUnit.SECOND);
                 //转化为秒，一般倒计时以秒展现较为合适
                 String formatBetween = DateUtil.formatBetween(between * 1000, BetweenFormatter.Level.SECOND);
                 throw new ZKCustomException(StatusCode.FAILURE.getCode(),String.format("登入次数超出限制，上次登陆时间："+result.get("currentTime")+"，登陆ip："+result.get("ip")+"，距离解锁："+formatBetween));
@@ -143,6 +181,11 @@ public class LoginServiceImpl implements LoginService {
                 redisTemplate.opsForValue().set(keyPrefix, JSONUtil.toJsonStr(map),limitPeriod, TimeUnit.SECONDS);
             }
         }
+        AppShiroUser currentUser = UserContext.getCurrentUser();
+        currentUser.setLastLoginTime(currentTime);
+        currentUser.setTodayLoginCount(currentCount);
+        //重置登录次数与登录时间
+        UserContext userContext = new UserContext(currentUser);
         log.info("用户正常登陆, 当前已登入{}次",currentCount);
     }
 
@@ -195,6 +238,57 @@ public class LoginServiceImpl implements LoginService {
         return Result.handleSuccess(token);
     }
 
+    /**
+     * 发送登录验证码(邮箱)
+     *
+     * @param username ：用户名
+     * @return 验证码
+     */
+    @Override
+    public Result<String> sendLoginCode(String username) {
+        //获取验证码
+        String randomNum = getRandomNum();
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + username;
+        //如果已经有验证码，则删除当前验证码
+        redisTemplate.delete(codeKey);
+        //根据用户名获取用户信息
+        LoginUser loginUser = userService.qryUserByUsername(username);
+        if (Objects.isNull(loginUser) || Objects.isNull(loginUser.getEmail())){
+            return Result.handleSuccess("发送个空气 0.0 ");
+        }
+        //发送邮件
+        sendLoginCode4Email(randomNum,loginUser.getEmail());
+        //将验证码存在缓存里进行比对
+        redisTemplate.opsForValue().set(codeKey,randomNum,5,TimeUnit.MINUTES);
+        return Result.handleSuccess("验证码已发送！");
+    }
+
+    /**
+     * 向邮箱发送验证码邮件
+     * @param randomNum ： 验证码
+     * @param email ： 手机号
+     */
+    private void sendLoginCode4Email(String randomNum, String email) {
+        //标题
+        String subject = "登录验证码";
+        //内容
+        String context =  "【个人测试】您的验证码发送成功，验证码为["+randomNum+ "]，邮件来自zengkaiの测试，若非本人登录，请忽略本信息。";
+        String send = MailUtil.send(CollUtil.newArrayList(email), subject, context, false);
+        log.info("发送邮件结果：{},验证码：{}", send, randomNum);
+    }
+
+    /**
+     * 随机生成六位随机数验证码
+     * @return 六位数字验证码
+     */
+    private String getRandomNum(){
+        //产生(0,999999]之间的随机数
+        Integer randNum = (int)(Math.random()* (999999)+1);
+        //进行六位数补全
+        String randomCode = String.format("%06d",randNum);
+        return randomCode;
+    }
 
     /**
      * 登录后更新缓存，生成token，设置响应头部信息

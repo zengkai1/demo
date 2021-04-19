@@ -18,4 +18,6 @@ public interface KeyPrefixConstants {
 
     String LOGIN_COUNT = LOGIN_SERVICE + "loginCount:";
 
+    String LOGIN_CODE = LOGIN_SERVICE + "code:";
+
 }
