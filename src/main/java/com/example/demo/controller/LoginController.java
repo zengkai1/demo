@@ -2,17 +2,13 @@ package com.example.demo.controller;
 
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.shiro.UserContext;
-import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
 import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
-import com.example.demo.util.MD5SaltUtil;
 import com.example.demo.util.Result;
-import com.example.demo.util.SendEmailUtil;
 import io.swagger.annotations.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -99,36 +95,7 @@ public class LoginController {
     @PostMapping(value = "/register")
     @ApiOperation(value = "用户注册", notes = "用户注册")
     public Result<String> register(@Valid @RequestBody SaveUserForm userForm){
-        //查询用户名是否重复
-        LoginUser user = userService.qryUserByUsername(userForm.getUsername());
-        if (Objects.nonNull(user)){
-            return Result.failure().setMsg("系统已存在该账号，请重新输入");
-        }
-        //查询手机号是否重复
-        user = userService.qryUserByPhone(userForm.getPhone());
-        if (Objects.nonNull(user)){
-            return Result.failure().setMsg("系统已存在该手机号，请重新输入");
-        }
-        //查询邮箱是否重复
-        user = userService.qryUserByEmail(userForm.getEmail());
-        if (Objects.nonNull(user)){
-            return Result.failure().setMsg("系统已存在该邮箱，请重新输入");
-        }
-        //获取验证码的key
-        String codeKey = KeyPrefixConstants.LOGIN_CODE + userForm.getEmail();
-        //校验邮箱验证码,邮箱可做用户名，必须校验
-        boolean checkVerificationCode = SendEmailUtil.checkVerificationCode(userForm.getCode(), codeKey, true);
-        if (!checkVerificationCode){
-            return Result.failure().setMsg("邮箱验证码校验不通过！");
-        }
-        //密码加密
-        userForm.setPassword(MD5SaltUtil.encrypt(userForm.getPassword()));
-        //入库
-        boolean saveUser = userService.saveUser(userForm);
-        if (saveUser){
-            return Result.ok().setMsg("注册成功");
-        }
-        return Result.failure().setMsg("注册失败");
+        return loginService.register(userForm);
     }
 
     /**

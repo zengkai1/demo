@@ -1,24 +1,14 @@
 package com.example.demo.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.mail.MailAccount;
-import cn.hutool.extra.mail.MailUtil;
-import cn.hutool.http.server.HttpServerResponse;
 import cn.hutool.json.JSONUtil;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.example.demo.co.LoginUser;
-import com.example.demo.co.Permissions;
-import com.example.demo.co.Role;
-import com.example.demo.co.User;
 import com.example.demo.co.shiro.AppShiroUser;
 import com.example.demo.co.shiro.UserContext;
-import com.example.demo.config.jwt.JwtFilter;
 import com.example.demo.config.jwt.JwtProperties;
 import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
@@ -27,13 +17,12 @@ import com.example.demo.constants.interfaces.KeyPrefixConstants;
 import com.example.demo.constants.interfaces.RegexConstants;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
+import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.naming.Context;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -264,6 +252,46 @@ public class LoginServiceImpl implements LoginService {
         String randomNum = SendEmailUtil.getRandomNum(codeKey, email,5);
         log.info("验证码：{}",randomNum);
         return Result.handleSuccess("验证码已发送！");
+    }
+
+    /**
+     * 注册
+     *
+     * @param userForm ：用户提交表单
+     * @return 注册结果
+     */
+    @Override
+    public Result<String> register(SaveUserForm userForm) {
+        //查询用户名是否重复
+        LoginUser user = userService.qryUserByUsername(userForm.getUsername());
+        if (Objects.nonNull(user)){
+            return Result.failure().setMsg("系统已存在该账号，请重新输入");
+        }
+        //查询手机号是否重复
+        user = userService.qryUserByPhone(userForm.getPhone());
+        if (Objects.nonNull(user)){
+            return Result.failure().setMsg("系统已存在该手机号，请重新输入");
+        }
+        //查询邮箱是否重复
+        user = userService.qryUserByEmail(userForm.getEmail());
+        if (Objects.nonNull(user)){
+            return Result.failure().setMsg("系统已存在该邮箱，请重新输入");
+        }
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + userForm.getEmail();
+        //校验邮箱验证码,邮箱可做用户名，必须校验
+        boolean checkVerificationCode = SendEmailUtil.checkVerificationCode(userForm.getCode(), codeKey, true);
+        if (!checkVerificationCode){
+            return Result.failure().setMsg("邮箱验证码校验不通过！");
+        }
+        //密码加密
+        userForm.setPassword(MD5SaltUtil.encrypt(userForm.getPassword()));
+        //入库
+        boolean saveUser = userService.saveUser(userForm);
+        if (saveUser){
+            return Result.ok().setMsg("注册成功");
+        }
+        return Result.failure().setMsg("注册失败");
     }
 
 

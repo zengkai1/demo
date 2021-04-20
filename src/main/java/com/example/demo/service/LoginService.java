@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.User;
 import com.example.demo.co.shiro.UserContext;
+import com.example.demo.form.user.SaveUserForm;
 import com.example.demo.util.Result;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,4 +52,11 @@ public interface LoginService {
      * @return 验证码
      */
     Result<String> sendLoginCodeByEmail(String email);
+
+    /**
+     * 注册
+     * @param userForm：用户提交表单
+     * @return 注册结果
+     */
+    Result<String> register(SaveUserForm userForm);
 }
