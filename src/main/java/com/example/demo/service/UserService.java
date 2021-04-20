@@ -77,4 +77,11 @@ public interface UserService{
      * @return 用户信息
      */
     Result<UserInfoDTO> getUserInfo();
+
+    /**
+     * 根据邮箱查询用户信息
+     * @param email ： 邮箱
+     * @return ： 登录用户信息
+     */
+    LoginUser qryUserByEmail(String email);
 }

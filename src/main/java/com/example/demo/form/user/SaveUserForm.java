@@ -44,4 +44,8 @@ public class SaveUserForm implements Serializable {
     @ApiModelProperty(value = "邮箱",required = true)
     @Pattern(regexp = RegexConstants.EMAIL,message = RegexConstants.EMAIL_MSG)
     private String email;
+
+    @ApiModelProperty(value = "邮箱验证码")
+    @NotBlank(message = "邮箱验证码不能为空")
+    private String code;
 }

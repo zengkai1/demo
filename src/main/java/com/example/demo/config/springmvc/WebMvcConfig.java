@@ -43,6 +43,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         pathPatterns.add("/error");
         pathPatterns.add("/register");
         pathPatterns.add("/sendLoginCode/**");
+        pathPatterns.add("/sendLoginCodeByEmail/**");
         registration.excludePathPatterns(pathPatterns);
     }
 

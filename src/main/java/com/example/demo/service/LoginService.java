@@ -44,4 +44,11 @@ public interface LoginService {
      * @return 验证码
      */
     Result<String> sendLoginCode(String username);
+
+    /**
+     * 发送登录验证码(邮箱)
+     * @param email：邮箱
+     * @return 验证码
+     */
+    Result<String> sendLoginCodeByEmail(String email);
 }

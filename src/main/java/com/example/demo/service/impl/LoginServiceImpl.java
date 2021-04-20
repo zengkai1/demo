@@ -24,6 +24,7 @@ import com.example.demo.config.shiro.CustomToken;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.DemoConstants;
 import com.example.demo.constants.interfaces.KeyPrefixConstants;
+import com.example.demo.constants.interfaces.RegexConstants;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
 import com.example.demo.service.LoginService;
@@ -70,8 +71,18 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public Result<UserContext> login(LoginUser user, HttpServletRequest request, HttpServletResponse response) {
+        //用邮箱也可登录
+        if (user.getUsername().matches(RegexConstants.EMAIL)){
+            //根据邮箱获取用户名
+            LoginUser loginUser = userService.qryUserByEmail(user.getUsername());
+            if (Objects.nonNull(loginUser)){
+                user.setUsername(loginUser.getUsername());
+            }
+        }
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + user.getUsername();
         //验证码校验
-        boolean checkVerificationCode = checkVerificationCode(user.getCode(), user.getUsername(), jwtProperties.isVerificationCode());
+        boolean checkVerificationCode = SendEmailUtil.checkVerificationCode(user.getCode(), codeKey, jwtProperties.isVerificationCode());
         if (!checkVerificationCode){
             return Result.handleFailure("登录失败！验证码不正确或已失效！");
         }
@@ -87,30 +98,6 @@ public class LoginServiceImpl implements LoginService {
         limitLogin(user.getUsername());
         //返回数据
         return Result.ok().setMsg("登陆成功").setData(UserContext.getCurrentUser()).setDescription("UserContext 信息");
-    }
-
-    /**
-     * 验证码是否通过校验
-     * @param code 验证码
-     * @param enable 是否启用
-     * @return boolean 是否通过校验
-     */
-    private boolean checkVerificationCode(String code, String username, boolean enable){
-        //如果未开启验证码校验
-        if (!enable){
-            return true;
-        }
-        //获取验证码的key
-        String codeKey = KeyPrefixConstants.LOGIN_CODE + username;
-        //获取redis里的验证码
-        String codeCache = (String)redisTemplate.opsForValue().get(codeKey);
-        //如果查询不到或不匹配
-        if (StrUtil.isBlank(codeCache) || !codeCache.equals(code)){
-            return false;
-        }
-        //删除验证码缓存
-        redisTemplate.delete(codeKey);
-        return true;
     }
 
 
@@ -246,49 +233,39 @@ public class LoginServiceImpl implements LoginService {
      */
     @Override
     public Result<String> sendLoginCode(String username) {
-        //获取验证码
-        String randomNum = getRandomNum();
-        //获取验证码的key
-        String codeKey = KeyPrefixConstants.LOGIN_CODE + username;
-        //如果已经有验证码，则删除当前验证码
-        redisTemplate.delete(codeKey);
+
         //根据用户名获取用户信息
         LoginUser loginUser = userService.qryUserByUsername(username);
         if (Objects.isNull(loginUser) || Objects.isNull(loginUser.getEmail())){
             return Result.handleSuccess("发送个空气 0.0 ");
         }
-        //发送邮件
-        sendLoginCode4Email(randomNum,loginUser.getEmail());
-        //将验证码存在缓存里进行比对
-        redisTemplate.opsForValue().set(codeKey,randomNum,5,TimeUnit.MINUTES);
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + username;
+        //获取验证码
+        String randomNum = SendEmailUtil.getRandomNum(codeKey,loginUser.getEmail(),5);
+        log.info("验证码：{}",randomNum);
         return Result.handleSuccess("验证码已发送！");
     }
 
     /**
-     * 向邮箱发送验证码邮件
-     * @param randomNum ： 验证码
-     * @param email ： 手机号
+     * 发送登录验证码(邮箱)
+     *
+     * @param email ：邮箱
+     * @return 验证码
      */
-    private void sendLoginCode4Email(String randomNum, String email) {
-        //标题
-        String subject = "登录验证码";
-        //内容
-        String context =  "【个人测试】您的验证码发送成功，验证码为["+randomNum+ "]，邮件来自zengkaiの测试，若非本人登录，请忽略本信息。";
-        String send = MailUtil.send(CollUtil.newArrayList(email), subject, context, false);
-        log.info("发送邮件结果：{},验证码：{}", send, randomNum);
+    @Override
+    public Result<String> sendLoginCodeByEmail(String email) {
+        if (Objects.isNull(email)){
+            return Result.handleSuccess("发送个空气 0.0 ");
+        }
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + email;
+        //获取验证码
+        String randomNum = SendEmailUtil.getRandomNum(codeKey, email,5);
+        log.info("验证码：{}",randomNum);
+        return Result.handleSuccess("验证码已发送！");
     }
 
-    /**
-     * 随机生成六位随机数验证码
-     * @return 六位数字验证码
-     */
-    private String getRandomNum(){
-        //产生(0,999999]之间的随机数
-        Integer randNum = (int)(Math.random()* (999999)+1);
-        //进行六位数补全
-        String randomCode = String.format("%06d",randNum);
-        return randomCode;
-    }
 
     /**
      * 登录后更新缓存，生成token，设置响应头部信息

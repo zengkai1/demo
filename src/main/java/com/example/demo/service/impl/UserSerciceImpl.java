@@ -189,5 +189,18 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         return Result.handleSuccess("查询成功!",userInfoDTO);
     }
 
+    /**
+     * 根据邮箱查询用户信息
+     *
+     * @param email ： 邮箱
+     * @return ： 登录用户信息
+     */
+    @Override
+    public LoginUser qryUserByEmail(String email) {
+        QueryWrapper<LoginUser> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(true,LoginUser::getEmail,email);
+        return this.baseMapper.selectOne(queryWrapper);
+    }
+
 
 }

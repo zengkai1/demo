@@ -9,6 +9,7 @@ import com.example.demo.service.LoginService;
 import com.example.demo.service.UserService;
 import com.example.demo.util.MD5SaltUtil;
 import com.example.demo.util.Result;
+import com.example.demo.util.SendEmailUtil;
 import io.swagger.annotations.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -77,6 +78,20 @@ public class LoginController {
     }
 
     /**
+     * 发送登录验证码(邮箱)
+     * @param email：邮箱
+     * @return 验证码
+     */
+    @GetMapping("/sendLoginCodeByEmail/{email}")
+    @ApiOperation(value = "发送登录验证码(邮箱)", notes = "发送登录验证码(邮箱)")
+    public Result<String> sendLoginCodeByEmail(@ApiParam(name = "email", value = "邮箱",example = "747580729@qq.com") @PathVariable("email") String email){
+        if (StringUtils.isEmpty(email)) {
+            return Result.error().setMsg("邮箱不能为空");
+        }
+        return loginService.sendLoginCodeByEmail(email);
+    }
+
+    /**
      * 用户注册
      * @param userForm ： 用户提交表单
      * @return ： 注册结果
@@ -93,6 +108,18 @@ public class LoginController {
         user = userService.qryUserByPhone(userForm.getPhone());
         if (Objects.nonNull(user)){
             return Result.failure().setMsg("系统已存在该手机号，请重新输入");
+        }
+        //查询邮箱是否重复
+        user = userService.qryUserByEmail(userForm.getEmail());
+        if (Objects.nonNull(user)){
+            return Result.failure().setMsg("系统已存在该邮箱，请重新输入");
+        }
+        //获取验证码的key
+        String codeKey = KeyPrefixConstants.LOGIN_CODE + userForm.getEmail();
+        //校验邮箱验证码,邮箱可做用户名，必须校验
+        boolean checkVerificationCode = SendEmailUtil.checkVerificationCode(userForm.getCode(), codeKey, true);
+        if (!checkVerificationCode){
+            return Result.failure().setMsg("邮箱验证码校验不通过！");
         }
         //密码加密
         userForm.setPassword(MD5SaltUtil.encrypt(userForm.getPassword()));
