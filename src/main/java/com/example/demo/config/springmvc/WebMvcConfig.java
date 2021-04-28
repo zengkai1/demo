@@ -1,11 +1,14 @@
 package com.example.demo.config.springmvc;
 
+import com.example.demo.config.shiro.ExcludeUrlPropertiesConfig;
+import com.example.demo.interceptor.AuthorizationInterceptor;
 import com.example.demo.interceptor.CustomInterceptor;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -23,6 +26,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private CustomInterceptor customInterceptor;
 
+    @Autowired
+    private AuthorizationInterceptor authorizationInterceptor;
+
+    @Resource
+    private ExcludeUrlPropertiesConfig urlPropertiesConfig ;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
@@ -31,20 +40,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registration.addPathPatterns("/**");
         //对List中的路径不进行拦截
         List<String> pathPatterns = Lists.newArrayList();
-        pathPatterns.add("/index");
-        pathPatterns.add("/mongo/qryMap");
-        pathPatterns.add("/swagger-ui.html/**");
-        pathPatterns.add("/swagger-resources/**");
-        pathPatterns.add("/v2/**");
-        pathPatterns.add("/webjars/**");
-        pathPatterns.add("/login");
-        pathPatterns.add("/logout");
-        pathPatterns.add("/doc.html");
-        pathPatterns.add("/error");
-        pathPatterns.add("/register");
-        pathPatterns.add("/sendLoginCode/**");
-        pathPatterns.add("/sendLoginCodeByEmail/**");
+        List<String> excluded = urlPropertiesConfig.getExcluded();
+        pathPatterns.addAll(excluded);
         registration.excludePathPatterns(pathPatterns);
+
+        InterceptorRegistration authRegistration = registry.addInterceptor(authorizationInterceptor);
+        authRegistration.addPathPatterns("/**");
+        authRegistration.excludePathPatterns(pathPatterns);
     }
 
     @Override

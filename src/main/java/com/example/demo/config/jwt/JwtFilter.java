@@ -83,9 +83,13 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      */
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
-        HttpServletRequest request1 = (HttpServletRequest) request;
-        System.out.println("请求路径："+  request1.getRequestURI());
+        String uri = ((HttpServletRequest) request).getRequestURI();
+        System.out.println("请求路径："+ uri );
         try {
+            if (uri.equals("/login")){
+                LOGGER.info("登录放行");
+                return true;
+            }
             if (isLoginAttempt(request,response)){
                 return this.executeLogin(request, response);
             }

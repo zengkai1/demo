@@ -1,0 +1,16 @@
+#拦截url
+login-exclude-list:
+  excluded:
+    - /index
+    - /mongo/qryMap
+    - /swagger-ui.html/**
+    - /swagger-resources/**
+    - /v2/**
+    - /webjars/**
+    - /login/**
+    - /logout
+    - /doc.html
+    - /error
+    - /register
+    - /sendLoginCode/**
+    - /sendLoginCodeByEmail/**

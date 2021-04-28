@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.example.demo.annotation.Authorization;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.user.update.UpdateUserForm;
 import com.example.demo.dto.user.LoginUserDTO;
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -40,6 +40,7 @@ public class UserController {
      * @return ：用户分页信息
      */
     @GetMapping("/page")
+    @Authorization(value = "user:page")
     @ApiOperation(value = "分页查询用户信息", notes = "分页查询用户信息")
     private Result<IPage<LoginUserDTO>> page(@Validated QueryUsersByPageForm queryUsersByPageForm){
        return Result.ok().setData(userService.qryUsersByPage(queryUsersByPageForm));
@@ -51,6 +52,7 @@ public class UserController {
      * @return ： 删除结果
      */
     @DeleteMapping("/del/{id}")
+    @Authorization(value = "user:del")
     @ApiOperation(value = "根据用户ID删除用户", notes = "根据用户ID删除用户")
     private Result<String> delById(@PathVariable(value = "id") String id){
         if (userService.delById(id)){
@@ -65,6 +67,7 @@ public class UserController {
      * @return ： 修改结果
      */
     @PostMapping("/update")
+    @Authorization(value = "user:update")
     @ApiOperation(value = "修改用户信息", notes = "修改用户信息")
     private Result<String> update(@RequestBody UpdateUserForm updateUserForm){
         //查询手机号是否重复
@@ -84,6 +87,7 @@ public class UserController {
      * @return
      */
     @ApiOperation(value = "获取用户信息",notes = "刷新token")
+    @Authorization(value = "user:getUserInfo")
     @GetMapping("/getUserInfo")
     public Result<UserInfoDTO> getUserInfo(){
         return userService.getUserInfo();
