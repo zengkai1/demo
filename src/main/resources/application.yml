@@ -5,6 +5,10 @@ spring:
     active: demo,token,exclude-url
   mvc:
     static-path-pattern: /**
+    hiddenmethod:
+      filter:
+        enabled: true
+
 
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/student?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC

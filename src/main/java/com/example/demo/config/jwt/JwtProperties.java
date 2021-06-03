@@ -39,4 +39,9 @@ public class JwtProperties {
      * 验证码开关
      */
     public boolean verificationCode;
+
+    /**
+     * token校验启用开关
+     */
+    public boolean checkToken;
 }

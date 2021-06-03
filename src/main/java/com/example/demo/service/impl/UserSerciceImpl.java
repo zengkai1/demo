@@ -136,11 +136,28 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
                 String updatetime = DateTimeUtil.dateStrConver(loginUserDTO.getUpdatetime());
                 loginUserDTO.setUpdatetime(updatetime);
             }
+            if (Objects.nonNull(loginUserDTO.getPhone())){
+                loginUserDTO.setPhone(hideTelephone(loginUserDTO.getPhone()));
+            }
         });
         userDTOIPage.setRecords(loginUserDTOS);
         return userDTOIPage;
     }
 
+    /**
+     * 将手机号私密处理
+     * @param telephone
+     * @return
+     */
+    private  String hideTelephone(String telephone) {
+        //方法1
+/*        StringBuffer stringBuffer = new StringBuffer(telephone);
+        StringBuffer replace = stringBuffer.replace(3, 7, "****");
+        String hideTelephone = replace.toString();*/
+        //方法2
+        String hideTelephone = telephone.replaceAll("(\\d{3})\\d{4}(\\d{4})","$1****$2");
+        return hideTelephone;
+    }
 
     /**
      * 根据用户ID删除用户
@@ -202,5 +219,12 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         return this.baseMapper.selectOne(queryWrapper);
     }
 
-
+    public static void main(String[] args) {
+        String telephone = "";
+        StringBuffer telephone1 =new StringBuffer("3");
+        StringBuffer replace = telephone1.replace(3, 7, "****");
+        System.out.println(replace);
+        String hideTelephone = telephone.replaceAll("(\\d{3})\\d{4}(\\d{4})","$1****$2");
+        System.out.println(hideTelephone);
+    }
 }

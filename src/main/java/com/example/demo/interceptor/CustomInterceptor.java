@@ -1,11 +1,13 @@
 package com.example.demo.interceptor;
 
 import cn.hutool.core.util.StrUtil;
+import com.example.demo.config.jwt.JwtProperties;
 import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import com.example.demo.exception.ZKCustomException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.servlet.HandlerInterceptor;

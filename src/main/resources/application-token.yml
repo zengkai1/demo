@@ -7,3 +7,5 @@ token:
   refreshCheckTime: 60
   # 验证码启用开关
   verificationCode: false
+  # token校验启用开关
+  checkToken: false

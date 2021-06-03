@@ -1,5 +1,6 @@
 package com.example.demo.config.springmvc;
 
+import com.example.demo.config.jwt.JwtProperties;
 import com.example.demo.config.shiro.ExcludeUrlPropertiesConfig;
 import com.example.demo.interceptor.AuthorizationInterceptor;
 import com.example.demo.interceptor.CustomInterceptor;
@@ -29,6 +30,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private AuthorizationInterceptor authorizationInterceptor;
 
+    @Autowired
+    private JwtProperties jwtProperties;
+
     @Resource
     private ExcludeUrlPropertiesConfig urlPropertiesConfig ;
 
@@ -42,6 +46,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         List<String> pathPatterns = Lists.newArrayList();
         List<String> excluded = urlPropertiesConfig.getExcluded();
         pathPatterns.addAll(excluded);
+        if (Boolean.FALSE.equals(jwtProperties.checkToken)){
+            pathPatterns.add("/**");
+        }
         registration.excludePathPatterns(pathPatterns);
 
         InterceptorRegistration authRegistration = registry.addInterceptor(authorizationInterceptor);
