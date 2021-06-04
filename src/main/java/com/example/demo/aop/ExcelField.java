@@ -1,6 +1,8 @@
 package com.example.demo.aop;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,7 +20,7 @@ import java.lang.annotation.Target;
  */
 @Target({ ElementType.METHOD, ElementType.FIELD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExcelField {
+public @interface ExcelField  {
 
     /**
      * 导出字段标题（需要添加批注请用“**”分隔，标题**批注，仅对导出模板有效）
@@ -40,7 +42,7 @@ public @interface ExcelField {
      *
      * 备注：Integer/Long类型设置居右对齐（align=3）
      */
-    int align() default 0;
+    HorizontalAlignment align() default HorizontalAlignment.CENTER;
 
     /**
      * 导出字段字段排序（升序）
@@ -56,4 +58,9 @@ public @interface ExcelField {
      * 格式类型：1-表头，2-栏目备注,3-说明
      */
     int formatType() default 1;
+
+    /**
+     * 高度
+     */
+    short hight() default 12;
 }

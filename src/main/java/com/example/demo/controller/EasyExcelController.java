@@ -1,10 +1,8 @@
 package com.example.demo.controller;
 
-import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.excel.EasyExcel;
 import com.example.demo.co.excel.CityInfoCO;
 import com.example.demo.config.excel.ExcelAnalysisHelper;
+import com.example.demo.util.ExcelUtil;
 import com.example.demo.util.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -12,7 +10,6 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,10 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -58,29 +52,19 @@ public class EasyExcelController {
     @GetMapping("/writeExcel")
     @ApiOperation(value = "写入excel数据", notes = "写入excel数据")
     public void writeExcel(HttpServletResponse response){
-        try {
-            List<CityInfoCO> cityInfoList = mongoTemplate.findAll(CityInfoCO.class);
-            response.setContentType("application/vnd.ms-excel;charset=utf-8");
-            response.setCharacterEncoding("utf-8");
-            // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-            String fileName = URLEncoder.encode("测试", "UTF-8").replaceAll("\\+", "%20");
-            response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
-            EasyExcel.write(response.getOutputStream(), CityInfoCO.class).sheet("模板").doWrite(cityInfoList);
-        }catch (Exception e){
-            HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-            httpServletResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            httpServletResponse.setCharacterEncoding("UTF-8");
-            httpServletResponse.setContentType("application/json; charset=utf-8");
-            PrintWriter writer = null;
-            try {
-                writer = httpServletResponse.getWriter();
-            } catch (IOException ioException) {
-                log.error("写入异常信息失败：{}", ioException.getMessage());
-            }
-            Result result = Result.failure().setMsg(String.format("Excel导出失败：%s",e.getMessage()));
-            writer.append(JSONUtil.toJsonStr(result));
-            throw new RuntimeException("Excel导出异常!" + e.getMessage());
-        }
+        List<CityInfoCO> cityInfoList = mongoTemplate.findAll(CityInfoCO.class);
+        String fileName = "Test_EasyExcel";
+        String sheetName = "测试";
+        int[] mergeColIndex = {1,2,3};
+        int mergeRowIndex = 1;
+        ExcelUtil.writeExcel(response,cityInfoList,fileName,sheetName,mergeColIndex,mergeRowIndex,CityInfoCO.class);
+    }
 
+    @GetMapping("/getExcelTempalte")
+    @ApiOperation(value = "获取excel模板",notes = "获取excel模板")
+    public void getExcelTemplate(HttpServletResponse response){
+        String fileName = "ExcelTempalte";
+        String sheetName = "测试";
+        ExcelUtil.writeExcel(response,null,fileName,sheetName,CityInfoCO.class);
     }
 }
