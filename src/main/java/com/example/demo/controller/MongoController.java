@@ -68,7 +68,7 @@ public class MongoController {
      */
     @GetMapping("/qryAll")
     @ApiOperation(value = "分页查询用户信息", notes = "分页查询用户信息")
-    @LimitRequestAnnotation(value = "testLimit:qryAll:", exceptionMsg = "你的操作过于频繁,请休息一下吧!", key = "query", period = 30, count = 5, name = "resource", prefix = "limit", limitType = LimitTypeEnum.IP)
+    @LimitRequestAnnotation(value = "testLimit:qryAll:", exceptionMsg = "你的操作过于频繁,请休息一下吧!", key = "query", limitType = LimitTypeEnum.IP)
     @Cacheable(keyPrefix = DemoConstants.MongoQry_CACHE_KEY_PREFIX,expireTime = 5)
     public Result<List<User>> qryByName(){
         List<User> users = mongoTemplate.findAll(User.class);

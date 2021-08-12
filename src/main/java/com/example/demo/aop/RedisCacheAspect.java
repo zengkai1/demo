@@ -1,6 +1,7 @@
 package com.example.demo.aop;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.example.demo.annotation.CacheEvict;
@@ -85,7 +86,10 @@ public class RedisCacheAspect {
             try {
                 //获取数据
                 result = pjp.proceed();
-                redisTemplate.opsForValue().set(key, result, cacheable.expireTime(), TimeUnit.MINUTES);
+                String code = JSONUtil.parseObj(result).getStr("code");
+                if (StrUtil.isNotBlank(code) && code.equals(String.valueOf(StatusCode.SUCCESS.getCode()))){
+                    redisTemplate.opsForValue().set(key, result, cacheable.expireTime(), TimeUnit.MINUTES);
+                }
             } catch (Throwable e) {
                 throw new ZKCustomException(StatusCode.FAILURE.getCode(),String.format("由redis切面获取数据异常:%s",e.getMessage()));
             }

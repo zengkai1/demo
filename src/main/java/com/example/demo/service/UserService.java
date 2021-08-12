@@ -84,4 +84,6 @@ public interface UserService{
      * @return ： 登录用户信息
      */
     LoginUser qryUserByEmail(String email);
+
+    Result<LoginUserDTO> getById(String id);
 }

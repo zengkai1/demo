@@ -14,4 +14,6 @@ public interface DemoConstants {
  String MongoQry_CACHE_KEY_PREFIX = "demo:mongoqry:";
 
  Integer LIMIT_TIME_MAX = 15;
+
+ String USERINFO_BY_ID = "userinfo:id:";
 }

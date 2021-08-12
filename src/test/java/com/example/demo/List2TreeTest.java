@@ -45,8 +45,18 @@ public class List2TreeTest {
         Map<String,Object> map5 = new HashMap<>();
         map5.put("id",5);
         map5.put("pid",0);
-        map5.put("name","水蜜桃");
+        map5.put("name","桃子");
         data.add(map5);
+        Map<String,Object> map6 = new HashMap<>();
+        map6.put("id",6);
+        map6.put("pid",5);
+        map6.put("name","水蜜桃");
+        data.add(map6);
+        Map<String,Object> map7 = new HashMap<>();
+        map7.put("id",7);
+        map7.put("pid",6);
+        map7.put("name","坏掉的");
+        data.add(map7);
         JSONArray result = List2TreeUtil.listToTree(JSONUtil.parseArray(JSONUtil.parse(data)),"id","pid","children");
         System.out.println(JSONUtil.parse(result));
     }

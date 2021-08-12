@@ -39,7 +39,7 @@ public class GlobalExceptionHandlerResolver extends ExceptionHandlerExceptionRes
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result handleGlobalException(ZKCustomException e) {
         logger.error("全局自定义异常拦截 exceptionMsg={} ,e={}", e.getMessage(), e);
-        return Result.failure().setCode(e.getCode()==null?StatusCode.FAILURE.getCode():e.getCode()).setData(e.getLocalizedMessage());
+        return Result.failure().setCode(e.getCode()==null?StatusCode.FAILURE.getCode():e.getCode()).setMsg(e.getLocalizedMessage());
     }
 
     @ExceptionHandler(AuthorizationException.class)
@@ -67,7 +67,7 @@ public class GlobalExceptionHandlerResolver extends ExceptionHandlerExceptionRes
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result  exceptionTranslation(Exception e) {
         logger.error("全局异常信息 exceptionMsg={} ,e={}", e.getMessage(), e);
-        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setData(e.getLocalizedMessage());
+        return Result.failure().setCode(StatusCode.FAILURE.getCode()).setMsg(e.getLocalizedMessage());
         //  return handleGlobalException(new ZKCustomException(e.getMessage()));
     }
 

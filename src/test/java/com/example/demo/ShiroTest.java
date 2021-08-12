@@ -2,6 +2,7 @@ package com.example.demo;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.example.demo.co.User;
 import com.example.demo.constants.interfaces.SecurityConstants;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -15,7 +16,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>
@@ -72,6 +75,34 @@ public class ShiroTest {
         subject.logout(); // 登出
 
         System.out.println("isAuthenticated:" + subject.isAuthenticated()); // 输出false
+    }
+
+    @Test
+    public void testEquals(){
+        try {
+            User a = null;
+            String s2 = String.valueOf(a);
+            System.out.println("String.valueOf："+s2);
+            String s = a.toString();
+            System.out.println("toString："+s);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testEquals2(){
+        long start = System.currentTimeMillis();
+        for (Integer a = 0;a<100000;a++){
+            String.valueOf(a);
+        }
+        System.out.println("time："+(System.currentTimeMillis()-start)+" ms");
+
+        long start2 = System.currentTimeMillis();
+        for (Integer b = 0;b<100000;b++){
+            b.toString();
+        }
+        System.out.println("time："+(System.currentTimeMillis()-start2)+" ms");
     }
 
 }

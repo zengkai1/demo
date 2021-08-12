@@ -8,6 +8,8 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.demo.annotation.LimitRequestAnnotation;
+import com.example.demo.co.shiro.UserContext;
+import com.example.demo.constants.StatusCode;
 import com.example.demo.constants.enums.LimitTypeEnum;
 import com.example.demo.constants.enums.ResultEnum;
 import com.example.demo.exception.ZKCustomException;
@@ -66,7 +68,6 @@ public class LimitRequestInterceptor {
         HttpServletRequest request = requestAttributes.getRequest();
         //获取请求头
         String requestHeader = request.getHeader("Authorization");
-
         Object proceed = null;
 
         MethodSignature signature = (MethodSignature) proceedingJoinPoint.getSignature();
@@ -80,8 +81,6 @@ public class LimitRequestInterceptor {
             }
             return proceed;
         }
-        //获取当前请求用户ID
-        String userId = "zengkai";
         //获取接口注解限流类型\限制时间\限制次数
         LimitTypeEnum limitType = limitRequestAnnotation.limitType();
         int maxCount = limitRequestAnnotation.count();
@@ -98,6 +97,8 @@ public class LimitRequestInterceptor {
                 break;
             //客户自定义限流
             case CUSTOMER:
+                //获取当前请求用户ID
+                String userId = UserContext.getCurrentUser().getId();
                 key = value + userId;
                 break;
             default:
@@ -129,7 +130,7 @@ public class LimitRequestInterceptor {
                 //当前解锁倒计时
                 long between = DateUtil.between(DateUtil.parse(lockTime), DateUtil.parse(new DateTime().toString()), DateUnit.SECOND);
                 String formatBetween = DateUtil.formatBetween(between * 1000, BetweenFormatter.Level.SECOND);
-                throw new ZKCustomException(ResultEnum.ERROR_CODE.getCode(),String.format(limitRequestAnnotation.exceptionMsg()+"离解锁还剩:%s",formatBetween));
+                throw new ZKCustomException(StatusCode.FAILURE.getCode(),String.format(limitRequestAnnotation.exceptionMsg()+"离解锁还剩:%s",formatBetween));
             }
         }
         return  proceedingJoinPoint.proceed();

@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.example.demo.co.LoginUser;
 import com.example.demo.constants.StatusCode;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -76,4 +78,29 @@ public class test {
         }
     }
 
+    @Test
+    public void testEqual(){
+        String a = "abCDE";
+        String b = "AbcDe";
+        if (a.equalsIgnoreCase(b)){
+            System.out.println("test ok !");
+        }else {
+            System.out.println("test no !");
+        }
+    }
+
+    @Test
+    public void testList(){
+        String str = "";
+        System.out.println(StrUtil.isBlank(str));
+    }
+    @Test
+    public void testList3(){
+        int total = 13;//数据总量
+        int row = 3;//一页显示条数
+        int totalPages;//总页数
+        totalPages = total % row ==0 ? total/row : total/row +1;
+        Integer a  = total/row;
+        System.out.println(a);
+    }
 }

@@ -49,11 +49,11 @@ public class LoginUser implements Serializable{
 
     @ApiModelProperty(value = "创建时间",hidden = true)
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    private Date createtime;
+    private String createtime;
 
     @ApiModelProperty(value = "修改时间",hidden = true)
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    private Date updatetime;
+    private String updatetime;
 
     @TableField(value = "del_flag", fill = FieldFill.INSERT)
     @TableLogic

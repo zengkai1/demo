@@ -81,7 +81,7 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         LoginUser user = new LoginUser();
         BeanUtils.copyProperties(userForm,user);
         user.setId(SnowflakeIdWorkerUtil.getSnowId());
-        user.setCreatetime(new Date());
+        user.setCreatetime(DateUtil.now());
         return this.save(user);
     }
 
@@ -217,6 +217,22 @@ public class UserSerciceImpl extends ServiceImpl<UserMapper, LoginUser > impleme
         QueryWrapper<LoginUser> queryWrapper = new QueryWrapper<>();
         queryWrapper.lambda().eq(true,LoginUser::getEmail,email);
         return this.baseMapper.selectOne(queryWrapper);
+    }
+
+    @Override
+    public Result<LoginUserDTO> getById(String id) {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        LoginUser loginUser = this.baseMapper.selectById(id);
+        if (Objects.isNull(loginUser)){
+            return Result.handleFailure("用户不存在!");
+        }
+        LoginUserDTO userDTO = new LoginUserDTO();
+        BeanUtils.copyProperties(loginUser,userDTO);
+        return Result.ok().setData(userDTO);
     }
 
     public static void main(String[] args) {

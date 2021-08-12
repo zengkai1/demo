@@ -1,11 +1,15 @@
 package com.example.demo;
 
+import cn.hutool.json.JSONUtil;
 import com.example.demo.util.MD5SaltUtil;
 import com.example.demo.util.MD5Util;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+
+import java.nio.file.OpenOption;
+import java.util.*;
 
 /**
  * <p>
@@ -16,7 +20,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
  * @Version: V1.0
  * @since: 2020/12/8 11:31
  */
-@SpringBootTest
+//@SpringBootTest
 public class MongoTest {
 
     @Autowired
@@ -38,5 +42,36 @@ public class MongoTest {
         System.out.println(MD5Util.encrypt("1322469733734756353"));
     }
 
+    @Test
+    public void test1(){
+        Boolean aBoolean = null;
+        if (aBoolean){
+            System.out.println("不报错");
+        }
+    }
+
+    @Test
+    public void test2(){
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("supplierId","1343849382564782082");
+        paramMap.put("platformId","dsy_EMONpGJ9EijH");
+        System.out.println(JSONUtil.parse(paramMap));
+    }
+
+    @Test
+    public void test3(){
+        String a = null;
+        String s = Optional.ofNullable(a).orElse("ok");
+        System.out.println(s);
+    }
+
+    @Test
+    public void test4(){
+        String a = "abc";
+       // String s = Optional.ofNullable(a).orElse("ok");
+       // System.out.println(s);
+        String s1 = Optional.of(a).orElse("ok");
+        System.out.println(s1);
+    }
 }
 

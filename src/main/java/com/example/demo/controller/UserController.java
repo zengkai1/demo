@@ -2,15 +2,22 @@ package com.example.demo.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.annotation.Authorization;
+import com.example.demo.annotation.CacheEvict;
+import com.example.demo.annotation.Cacheable;
+import com.example.demo.annotation.LimitRequestAnnotation;
 import com.example.demo.co.LoginUser;
 import com.example.demo.co.user.update.UpdateUserForm;
+import com.example.demo.constants.enums.LimitTypeEnum;
+import com.example.demo.constants.interfaces.DemoConstants;
 import com.example.demo.dto.user.LoginUserDTO;
 import com.example.demo.dto.user.UserInfoDTO;
 import com.example.demo.form.user.QueryUsersByPageForm;
 import com.example.demo.service.UserService;
+import com.example.demo.util.ContextUtil;
 import com.example.demo.util.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -43,8 +50,17 @@ public class UserController {
     @GetMapping("/page")
     @Authorization(value = "user:page")
     @ApiOperation(value = "分页查询用户信息", notes = "分页查询用户信息")
-    private Result<IPage<LoginUserDTO>> page(@Validated QueryUsersByPageForm queryUsersByPageForm){
+    public Result<IPage<LoginUserDTO>> page(@Validated QueryUsersByPageForm queryUsersByPageForm){
        return Result.ok().setData(userService.qryUsersByPage(queryUsersByPageForm));
+    }
+
+    @GetMapping("/{id}")
+    @Authorization(value = "user:getById")
+    @Cacheable(keyPrefix = DemoConstants.USERINFO_BY_ID,fieldKey = "#id",expireTime = 5)
+    @LimitRequestAnnotation(value = "user:getById:", exceptionMsg = "你的操作过于频繁,请休息一下吧!")
+    @ApiOperation(value = "根据id查询用户信息", notes = "根据id查询用户信息")
+    public Result<LoginUserDTO> getById(@ApiParam(name = "id", value = "用户id", required = true) @PathVariable(value = "id") String id){
+        return userService.getById(id);
     }
 
     /**
@@ -54,8 +70,9 @@ public class UserController {
      */
     @DeleteMapping("/del/{id}")
     @Authorization(value = "user:del")
+    @CacheEvict(keyPrefix = DemoConstants.USERINFO_BY_ID,fieldKey = "#id")
     @ApiOperation(value = "根据用户ID删除用户", notes = "根据用户ID删除用户")
-    private Result<String> delById(@PathVariable(value = "id") String id){
+    public Result<String> delById(@PathVariable(value = "id") String id){
         if (userService.delById(id)){
             return Result.handleSuccess("删除成功");
         }
@@ -70,7 +87,7 @@ public class UserController {
     @PostMapping("/update")
     @Authorization(value = "user:update")
     @ApiOperation(value = "修改用户信息", notes = "修改用户信息")
-    private Result<String> update(@RequestBody UpdateUserForm updateUserForm){
+    public Result<String> update(@RequestBody UpdateUserForm updateUserForm){
         //查询手机号是否重复
         LoginUser loginUser = userService.qryUserByPhone(updateUserForm.getPhone());
         if (Objects.nonNull(loginUser)){
